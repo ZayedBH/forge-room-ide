@@ -883,7 +883,8 @@ mod tests {
     #[test]
     fn decisions_are_attributed_and_old_messages_remain_regular() {
         let mut room = room();
-        room.post_record("alice", "Choose SQLite", None, true).unwrap();
+        room.post_record("alice", "Choose SQLite", None, true)
+            .unwrap();
         assert!(room.messages[0].decision);
         assert_eq!(room.messages[0].actor_id, "alice");
         assert!(room
@@ -891,7 +892,10 @@ mod tests {
             .iter()
             .any(|event| event.detail == "recorded a room decision"));
         let mut old = serde_json::to_value(&room).unwrap();
-        old["messages"][0].as_object_mut().unwrap().remove("decision");
+        old["messages"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("decision");
         let loaded: RoomState = serde_json::from_value(old).unwrap();
         assert!(!loaded.messages[0].decision);
     }
