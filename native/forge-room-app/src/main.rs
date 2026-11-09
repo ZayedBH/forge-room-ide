@@ -697,7 +697,11 @@ impl ForgeRoomApp {
                     }
                 });
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    ui.monospace(if text.trim().is_empty() { "No output yet." } else { &text });
+                    ui.monospace(if text.trim().is_empty() {
+                        "No output yet."
+                    } else {
+                        &text
+                    });
                 });
             }
             BottomTab::Problems => {
@@ -1356,13 +1360,7 @@ impl ForgeRoomApp {
                             egui::Sense::hover()
                         },
                     );
-                    icons::draw(
-                        ui.painter(),
-                        icon,
-                        rect.center(),
-                        20.0,
-                        theme::text_dim(),
-                    );
+                    icons::draw(ui.painter(), icon, rect.center(), 20.0, theme::text_dim());
                     if response.on_hover_text(tip).clicked() {
                         self.switch_view(SidebarView::Project(project_tools::Page::Settings));
                     }
