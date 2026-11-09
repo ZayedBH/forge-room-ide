@@ -1208,7 +1208,10 @@ impl RoomView {
         }
         ui.horizontal(|ui| {
             ui.add_space(14.0);
-            ui.small(format!("{} / 2000 characters", self.chat_draft.chars().count()));
+            ui.small(format!(
+                "{} / 2000 characters",
+                self.chat_draft.chars().count()
+            ));
         });
         ui.separator();
         ui.horizontal(|ui| {
@@ -1227,7 +1230,9 @@ impl RoomView {
             .filter(|message| {
                 query.is_empty()
                     || message.text.to_lowercase().contains(&query)
-                    || name_of(state, &message.actor_id).to_lowercase().contains(&query)
+                    || name_of(state, &message.actor_id)
+                        .to_lowercase()
+                        .contains(&query)
             })
             .take(100)
             .collect();
