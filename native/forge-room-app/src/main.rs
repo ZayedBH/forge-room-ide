@@ -1344,18 +1344,28 @@ impl ForgeRoomApp {
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = 14.0;
                 ui.add_space(14.0);
-                let (rect, response) =
-                    ui.allocate_exact_size(egui::vec2(30.0, 30.0), egui::Sense::hover());
-                icons::draw(
-                    ui.painter(),
-                    "cloud",
-                    rect.center(),
-                    20.0,
-                    theme::mix(theme::bg_activity(), theme::text_dim(), 0.6),
-                );
-                response.on_hover_text("Cloud: coming soon");
-                if ui.button("Settings").clicked() {
-                    self.switch_view(SidebarView::Project(project_tools::Page::Settings));
+                for (icon, tip, enabled) in [
+                    ("cloud", "Cloud: coming soon", false),
+                    ("settings", "Settings", true),
+                ] {
+                    let (rect, response) = ui.allocate_exact_size(
+                        egui::vec2(30.0, 30.0),
+                        if enabled {
+                            egui::Sense::click()
+                        } else {
+                            egui::Sense::hover()
+                        },
+                    );
+                    icons::draw(
+                        ui.painter(),
+                        icon,
+                        rect.center(),
+                        20.0,
+                        theme::text_dim(),
+                    );
+                    if response.on_hover_text(tip).clicked() {
+                        self.switch_view(SidebarView::Project(project_tools::Page::Settings));
+                    }
                 }
             });
             self.rail_item(
