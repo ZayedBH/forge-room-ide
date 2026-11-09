@@ -796,16 +796,31 @@ mod tests {
     #[test]
     fn local_messages_require_a_participant_and_load_from_old_rooms() {
         let mut room = room();
-        assert_eq!(room.post_message("outsider", "hello"), Err(DomainError::ActorNotConnected));
-        assert_eq!(room.post_message("alice", "  "), Err(DomainError::InvalidMessage));
-        assert_eq!(room.post_message("alice", &"x".repeat(2001)), Err(DomainError::InvalidMessage));
+        assert_eq!(
+            room.post_message("outsider", "hello"),
+            Err(DomainError::ActorNotConnected)
+        );
+        assert_eq!(
+            room.post_message("alice", "  "),
+            Err(DomainError::InvalidMessage)
+        );
+        assert_eq!(
+            room.post_message("alice", &"x".repeat(2001)),
+            Err(DomainError::InvalidMessage)
+        );
         room.post_message("alice", "  hello room  ").unwrap();
         room.post_message("bob", "second").unwrap();
         assert_eq!(room.messages[0].id, "message-1");
         assert_eq!(room.messages[0].text, "hello room");
         assert_eq!(room.messages[1].id, "message-2");
-        assert!(room.activity.iter().any(|event| event.detail == "posted a room message"));
-        assert!(!room.activity.iter().any(|event| event.detail.contains("hello room")));
+        assert!(room
+            .activity
+            .iter()
+            .any(|event| event.detail == "posted a room message"));
+        assert!(!room
+            .activity
+            .iter()
+            .any(|event| event.detail.contains("hello room")));
         let mut old = serde_json::to_value(&room).unwrap();
         old.as_object_mut().unwrap().remove("messages");
         let loaded: RoomState = serde_json::from_value(old).unwrap();
