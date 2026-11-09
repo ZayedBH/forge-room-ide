@@ -392,7 +392,11 @@ impl ForgeRoomApp {
         else {
             return;
         };
-        match fs::OpenOptions::new().write(true).create_new(true).open(&path) {
+        match fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
             Ok(_) => {
                 if let Some(workspace) = &mut self.workspace {
                     workspace.refresh();
