@@ -39,7 +39,10 @@ enum Intent {
         text: String,
     },
     ActAs(String),
-    PostMessage { text: String, task: Option<String> },
+    PostMessage {
+        text: String,
+        task: Option<String>,
+    },
 }
 
 #[derive(Default)]
@@ -261,9 +264,9 @@ impl RoomView {
             }
             Intent::ActAs(id) => self.acting_as = id,
             Intent::PostMessage { text, task } => {
-                if self.mutate(|state, actor| {
-                    state.post_task_message(actor, &text, task.as_deref())
-                }) {
+                if self
+                    .mutate(|state, actor| state.post_task_message(actor, &text, task.as_deref()))
+                {
                     self.chat_draft.clear();
                 }
             }
