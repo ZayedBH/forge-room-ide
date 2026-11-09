@@ -851,7 +851,8 @@ mod tests {
             room.post_task_message("alice", "blocked", Some("missing")),
             Err(DomainError::TaskNotFound)
         );
-        room.create_task("host", task("api", "alice", vec![])).unwrap();
+        room.create_task("host", task("api", "alice", vec![]))
+            .unwrap();
         room.post_task_message("alice", "API is ready", Some("api"))
             .unwrap();
         assert_eq!(room.messages[0].task_id.as_deref(), Some("api"));
