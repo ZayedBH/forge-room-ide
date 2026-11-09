@@ -1276,18 +1276,16 @@ impl ForgeRoomApp {
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = 14.0;
                 ui.add_space(14.0);
-                for (icon, tip) in [("cloud", "Cloud: coming soon")] {
-                    let (rect, response) =
-                        ui.allocate_exact_size(egui::vec2(30.0, 30.0), egui::Sense::hover());
-                    icons::draw(
-                        ui.painter(),
-                        icon,
-                        rect.center(),
-                        20.0,
-                        theme::mix(theme::bg_activity(), theme::text_dim(), 0.6),
-                    );
-                    response.on_hover_text(tip);
-                }
+                let (rect, response) =
+                    ui.allocate_exact_size(egui::vec2(30.0, 30.0), egui::Sense::hover());
+                icons::draw(
+                    ui.painter(),
+                    "cloud",
+                    rect.center(),
+                    20.0,
+                    theme::mix(theme::bg_activity(), theme::text_dim(), 0.6),
+                );
+                response.on_hover_text("Cloud: coming soon");
                 if ui.button("Settings").clicked() {
                     self.switch_view(SidebarView::Project(project_tools::Page::Settings));
                 }
