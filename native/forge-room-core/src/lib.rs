@@ -346,10 +346,10 @@ impl RoomState {
         if text.is_empty() || text.chars().count() > 2000 {
             return Err(DomainError::InvalidMessage);
         }
-        if let Some(task_id) = task_id
-            && !self.tasks.iter().any(|task| task.id == task_id)
-        {
-            return Err(DomainError::TaskNotFound);
+        if let Some(task_id) = task_id {
+            if !self.tasks.iter().any(|task| task.id == task_id) {
+                return Err(DomainError::TaskNotFound);
+            }
         }
         let next = self
             .messages
