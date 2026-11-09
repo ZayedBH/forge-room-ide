@@ -42,26 +42,49 @@ pub enum Selected {
 }
 
 fn action(label: &str, command: &str, detail: &'static str) -> Action {
-    Action { label: label.into(), command: command.into(), detail }
+    Action {
+        label: label.into(),
+        command: command.into(),
+        detail,
+    }
 }
 
 fn package_scripts(root: &Path, page: Page) -> Vec<Action> {
-    let Ok(text) = fs::read_to_string(root.join("package.json")) else { return Vec::new() };
-    let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) else { return Vec::new() };
-    let Some(scripts) = value.get("scripts").and_then(|value| value.as_object()) else { return Vec::new() };
-    let mut names: Vec<_> = scripts.keys()
-        .filter(|name| !name.is_empty() && name.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b':')))
+    let Ok(text) = fs::read_to_string(root.join("package.json")) else {
+        return Vec::new();
+    };
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) else {
+        return Vec::new();
+    };
+    let Some(scripts) = value.get("scripts").and_then(|value| value.as_object()) else {
+        return Vec::new();
+    };
+    let mut names: Vec<_> = scripts
+        .keys()
+        .filter(|name| {
+            !name.is_empty()
+                && name
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b':'))
+        })
         .collect();
     names.sort();
-    names.into_iter().filter(|name| match page {
-        Page::Tests => name.contains("test") || name.contains("lint") || name.contains("check"),
-        Page::RunDebug => name.as_str() == "start" || name.contains("dev") || name.contains("run"),
-        _ => true,
-    }).take(20).map(|name| Action {
-        label: (*name).clone(),
-        command: format!("npm run {name}"),
-        detail: "Project-defined npm script; inspect package.json before running",
-    }).collect()
+    names
+        .into_iter()
+        .filter(|name| match page {
+            Page::Tests => name.contains("test") || name.contains("lint") || name.contains("check"),
+            Page::RunDebug => {
+                name.as_str() == "start" || name.contains("dev") || name.contains("run")
+            }
+            _ => true,
+        })
+        .take(20)
+        .map(|name| Action {
+            label: (*name).clone(),
+            command: format!("npm run {name}"),
+            detail: "Project-defined npm script; inspect package.json before running",
+        })
+        .collect()
 }
 
 fn actions(root: &Path, page: Page) -> Vec<Action> {
@@ -74,62 +97,130 @@ fn actions(root: &Path, page: Page) -> Vec<Action> {
     };
     if let Some(manifest) = rust_manifest {
         return match page {
-            Page::Tests => vec![Action { command: format!("cargo test{manifest}"), ..action("Run Rust tests", "", "Runs the workspace test suite") }],
+            Page::Tests => vec![Action {
+                command: format!("cargo test{manifest}"),
+                ..action("Run Rust tests", "", "Runs the workspace test suite")
+            }],
             Page::Workflows => vec![
-                Action { command: format!("cargo check{manifest}"), ..action("Check Rust project", "", "Checks the workspace") },
-                action("Check Rust formatting", if manifest.is_empty() { "cargo fmt --check" } else { "cargo fmt --manifest-path native/Cargo.toml --check" }, "Reports formatting differences"),
+                Action {
+                    command: format!("cargo check{manifest}"),
+                    ..action("Check Rust project", "", "Checks the workspace")
+                },
+                action(
+                    "Check Rust formatting",
+                    if manifest.is_empty() {
+                        "cargo fmt --check"
+                    } else {
+                        "cargo fmt --manifest-path native/Cargo.toml --check"
+                    },
+                    "Reports formatting differences",
+                ),
             ],
-            Page::RunDebug => vec![Action { command: format!("cargo run{manifest}"), ..action("Run Rust project", "", "Runs the default binary") }],
+            Page::RunDebug => vec![Action {
+                command: format!("cargo run{manifest}"),
+                ..action("Run Rust project", "", "Runs the default binary")
+            }],
             _ => Vec::new(),
         };
     }
-    if root.join("package.json").exists() { return package_scripts(root, page); }
+    if root.join("package.json").exists() {
+        return package_scripts(root, page);
+    }
     if root.join("pyproject.toml").exists() || root.join("requirements.txt").exists() {
         return match page {
-            Page::Tests => vec![action("Run Python tests", "python -m pytest", "Requires pytest in the active environment")],
-            Page::Workflows => vec![action("Compile Python files", "python -m compileall .", "Checks syntax in this folder")],
+            Page::Tests => vec![action(
+                "Run Python tests",
+                "python -m pytest",
+                "Requires pytest in the active environment",
+            )],
+            Page::Workflows => vec![action(
+                "Compile Python files",
+                "python -m compileall .",
+                "Checks syntax in this folder",
+            )],
             _ => Vec::new(),
         };
     }
     if root.join("go.mod").exists() {
         return match page {
-            Page::Tests => vec![action("Run Go tests", "go test ./...", "Runs tests in all packages")],
-            Page::Workflows => vec![action("Check Go project", "go vet ./...", "Checks packages for suspicious code")],
-            Page::RunDebug => vec![action("Run Go project", "go run .", "Runs the root package")],
+            Page::Tests => vec![action(
+                "Run Go tests",
+                "go test ./...",
+                "Runs tests in all packages",
+            )],
+            Page::Workflows => vec![action(
+                "Check Go project",
+                "go vet ./...",
+                "Checks packages for suspicious code",
+            )],
+            Page::RunDebug => vec![action(
+                "Run Go project",
+                "go run .",
+                "Runs the root package",
+            )],
             _ => Vec::new(),
         };
     }
     if root.join("pom.xml").exists() {
         return match page {
-            Page::Tests => vec![action("Run Maven tests", "mvn test", "Runs the project's test phase")],
-            Page::Workflows => vec![action("Package Maven project", "mvn package", "Builds the project package")],
+            Page::Tests => vec![action(
+                "Run Maven tests",
+                "mvn test",
+                "Runs the project's test phase",
+            )],
+            Page::Workflows => vec![action(
+                "Package Maven project",
+                "mvn package",
+                "Builds the project package",
+            )],
             _ => Vec::new(),
         };
     }
     Vec::new()
 }
 
-pub fn show(ui: &mut egui::Ui, page: Page, root: Option<&Path>, runtimes: &[String]) -> Option<Selected> {
+pub fn show(
+    ui: &mut egui::Ui,
+    page: Page,
+    root: Option<&Path>,
+    runtimes: &[String],
+) -> Option<Selected> {
     ui.heading(page.title());
     ui.separator();
     match page {
         Page::Tests | Page::Workflows | Page::RunDebug => {
-            let Some(root) = root else { ui.label("Open a project folder to discover local commands."); return None; };
+            let Some(root) = root else {
+                ui.label("Open a project folder to discover local commands.");
+                return None;
+            };
             ui.label(format!("Project: {}", root.display()));
             ui.add_space(8.0);
             let actions = actions(root, page);
-            if actions.is_empty() { ui.label("No supported local command detected for this project."); }
+            if actions.is_empty() {
+                ui.label("No supported local command detected for this project.");
+            }
             for action in actions {
-                ui.group(|ui| { ui.label(action.detail); ui.monospace(action.command.as_str()); });
-                if ui.button(action.label.as_str()).clicked() { return Some(Selected::Command(action.command)); }
+                ui.group(|ui| {
+                    ui.label(action.detail);
+                    ui.monospace(action.command.as_str());
+                });
+                if ui.button(action.label.as_str()).clicked() {
+                    return Some(Selected::Command(action.command));
+                }
                 ui.add_space(6.0);
             }
-            if page == Page::RunDebug { ui.small("Debugger adapters and breakpoints are not connected yet."); }
+            if page == Page::RunDebug {
+                ui.small("Debugger adapters and breakpoints are not connected yet.");
+            }
         }
         Page::Models => {
             ui.label("Detected project runtimes:");
-            if runtimes.is_empty() { ui.label("Open a project to inspect its runtimes."); }
-            for runtime in runtimes { ui.label(runtime.as_str()); }
+            if runtimes.is_empty() {
+                ui.label("Open a project to inspect its runtimes.");
+            }
+            for runtime in runtimes {
+                ui.label(runtime.as_str());
+            }
             ui.small("AI model providers are not connected in this preview.");
         }
         Page::Extensions => {
@@ -141,7 +232,8 @@ pub fn show(ui: &mut egui::Ui, page: Page, root: Option<&Path>, runtimes: &[Stri
                     ui.separator();
                     ui.label("Project recommendations");
                     if let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) {
-                        if let Some(items) = value.get("recommendations").and_then(|v| v.as_array()) {
+                        if let Some(items) = value.get("recommendations").and_then(|v| v.as_array())
+                        {
                             for item in items.iter().take(30).filter_map(|v| v.as_str()) {
                                 ui.monospace(item);
                             }
@@ -155,12 +247,20 @@ pub fn show(ui: &mut egui::Ui, page: Page, root: Option<&Path>, runtimes: &[Stri
         }
         Page::Settings => {
             ui.label("Appearance");
-            if ui.button("Open Studio themes").clicked() { return Some(Selected::Studio); }
+            if ui.button("Open Studio themes").clicked() {
+                return Some(Selected::Studio);
+            }
             ui.separator();
             ui.label("Layout");
-            if ui.button("Toggle terminal").clicked() { return Some(Selected::ToggleTerminal); }
-            if ui.button("Toggle Room and AI dock").clicked() { return Some(Selected::ToggleDock); }
-            if ui.button("Toggle preview").clicked() { return Some(Selected::TogglePreview); }
+            if ui.button("Toggle terminal").clicked() {
+                return Some(Selected::ToggleTerminal);
+            }
+            if ui.button("Toggle Room and AI dock").clicked() {
+                return Some(Selected::ToggleDock);
+            }
+            if ui.button("Toggle preview").clicked() {
+                return Some(Selected::TogglePreview);
+            }
             ui.label("Project data");
             ui.small("Room state is stored locally with the project. Theme choice is stored in user settings.");
         }
