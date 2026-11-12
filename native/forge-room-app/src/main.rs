@@ -3206,7 +3206,14 @@ impl ForgeRoomApp {
             SidebarView::SourceControl => self.source_control_view(ui, false),
             SidebarView::Project(page) => {
                 let root = self.repo_root();
-                match project_tools::show(ui, page, root.as_deref(), &self.runtimes) {
+                match project_tools::show(
+                    ui,
+                    page,
+                    root.as_deref(),
+                    &self.runtimes,
+                    self.auto_save,
+                    self.editor_scale,
+                ) {
                     Some(project_tools::Selected::Command(_)) if !self.trusted => {
                         self.status = "Trust this folder first (Folder: Trust This Folder): project commands run its build scripts".into();
                     }
@@ -3227,6 +3234,9 @@ impl ForgeRoomApp {
                         }
                     }
                     Some(project_tools::Selected::Studio) => self.gallery.open(),
+                    Some(project_tools::Selected::AppCommand(command)) => {
+                        self.run_command(command, false);
+                    }
                     Some(project_tools::Selected::ToggleTerminal) => {
                         self.show_terminal = !self.show_terminal;
                     }

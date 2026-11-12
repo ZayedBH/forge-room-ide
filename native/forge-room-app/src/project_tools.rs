@@ -1,4 +1,5 @@
 //! Local project actions. A command runs only after its button is pressed.
+use crate::commands::Command;
 use eframe::egui;
 use std::{fs, path::Path};
 
@@ -35,6 +36,7 @@ struct Action {
 
 pub enum Selected {
     Command(String),
+    AppCommand(Command),
     Studio,
     ToggleTerminal,
     ToggleDock,
@@ -184,6 +186,8 @@ pub fn show(
     page: Page,
     root: Option<&Path>,
     runtimes: &[String],
+    auto_save: bool,
+    editor_scale: f32,
 ) -> Option<Selected> {
     ui.heading(page.title());
     ui.separator();
@@ -221,7 +225,12 @@ pub fn show(
             for runtime in runtimes {
                 ui.label(runtime.as_str());
             }
-            ui.small("AI model providers are not connected in this preview.");
+            ui.separator();
+            ui.label("AI agents use installed Claude Code or Codex CLI programs.");
+            ui.small("Provider sign-in and local model setup happen in those programs. An open trusted folder is required.");
+            if ui.button("Open AI Agent").clicked() {
+                return Some(Selected::AppCommand(Command::OpenAgent));
+            }
         }
         Page::Extensions => {
             ui.label("Native extension support is being developed.");
@@ -250,6 +259,47 @@ pub fn show(
             if ui.button("Open Studio themes").clicked() {
                 return Some(Selected::Studio);
             }
+            if let Some(action) = ui
+                .horizontal(|ui| {
+                    ui.label(format!("Editor text: {:.0}%", editor_scale * 100.0));
+                    if ui
+                        .button("−")
+                        .on_hover_text("Decrease editor font size (Ctrl+-)")
+                        .clicked()
+                    {
+                        return Some(Selected::AppCommand(Command::ZoomOut));
+                    }
+                    if ui
+                        .button("+")
+                        .on_hover_text("Increase editor font size (Ctrl+=)")
+                        .clicked()
+                    {
+                        return Some(Selected::AppCommand(Command::ZoomIn));
+                    }
+                    if ui
+                        .button("Reset")
+                        .on_hover_text("Reset editor font size (Ctrl+0)")
+                        .clicked()
+                    {
+                        return Some(Selected::AppCommand(Command::ZoomReset));
+                    }
+                    None
+                })
+                .inner
+            {
+                return Some(action);
+            }
+            if ui
+                .button(if auto_save {
+                    "Auto Save: On"
+                } else {
+                    "Auto Save: Off"
+                })
+                .on_hover_text("Save changed files after typing stops")
+                .clicked()
+            {
+                return Some(Selected::AppCommand(Command::ToggleAutoSave));
+            }
             ui.separator();
             ui.label("Layout");
             if ui.button("Toggle terminal").clicked() {
@@ -260,6 +310,9 @@ pub fn show(
             }
             if ui.button("Toggle preview").clicked() {
                 return Some(Selected::TogglePreview);
+            }
+            if ui.button("Reset panel layout").clicked() {
+                return Some(Selected::AppCommand(Command::ResetLayout));
             }
             ui.label("Project data");
             ui.small("Room state is stored locally with the project. Theme choice is stored in user settings.");
