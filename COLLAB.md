@@ -28,6 +28,8 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## Log (newest first)
 
+- 2026-11-12 Codex: Prepared local `integrate/review-batch-20261112` from PRs #34–#38. Resolved only `progress.md`/`COLLAB.md` overlap; Rust source merged cleanly. Combined 266 app tests, 12 core tests, formatting and Clippy passed. `main` and PR merge state unchanged; visible desktop acceptance still open.
+
 - 2026-11-12 Codex: Added additive local task due times, authorized owner/host changes, overdue chip/filter, Pulse jump, and active task summary on `feat/local-room-task-due-times` (PR #38). Old tasks default to no due time. Focused core/app tests and Clippy passed; desktop interaction pending. No reminder scheduler or network behavior claimed.
 - 2026-11-12 Codex: Added explicit .NET and CMake project command discovery in `feat/dotnet-project-actions` (PR #37). One safe-named solution is preferred over sibling projects; ambiguous .NET roots are skipped. CMake exposes Configure, Build and CTest according to generated files. Focused tests passed; real projects and desktop trial pending. This is a daily IDE workflow slice, not debugger or language-server support.
 - 2026-11-12 Codex: Cherry-picked five post-alpha.3 Atul native app tester-fix commits onto `integrate/atul-alpha3-fixes` without the upstream branch's design-asset deletions. Scope is agent, file/recovery safety, search, session and terminal source; local format, 263 tests and Clippy passed. PR review is pending. No PR merge or branch deletion.
