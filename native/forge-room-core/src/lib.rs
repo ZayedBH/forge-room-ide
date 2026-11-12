@@ -87,6 +87,9 @@ pub struct Task {
     pub completed_criteria: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub worktree_branch: Option<String>,
+    /// Optional local deadline. This is display/filter data, not a scheduler or reminder.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub due_at_epoch_seconds: Option<u64>,
     pub updated_at_epoch_seconds: u64,
 }
 
@@ -713,8 +716,18 @@ mod tests {
             acceptance_criteria: vec!["tests pass".into()],
             completed_criteria: Vec::new(),
             worktree_branch: None,
+            due_at_epoch_seconds: None,
             updated_at_epoch_seconds: now_epoch_seconds(),
         }
+    }
+
+    #[test]
+    fn old_tasks_load_without_a_due_time() {
+        let original = task("old", "alice", Vec::new());
+        let value = serde_json::to_value(&original).unwrap();
+        assert!(value.get("dueAtEpochSeconds").is_none());
+        let loaded: Task = serde_json::from_value(value).unwrap();
+        assert_eq!(loaded.due_at_epoch_seconds, None);
     }
 
     fn room() -> RoomState {
