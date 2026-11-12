@@ -175,6 +175,7 @@ pub enum DomainError {
     AgentOwnerMissing,
     AcceptanceCriteriaTooLarge,
     CompletedTaskHandoff,
+    CompletedTaskDueChange,
     DependencyBlocked(Vec<String>),
     DuplicateParticipant,
     DuplicateTask,
@@ -214,6 +215,12 @@ impl fmt::Display for DomainError {
             ),
             Self::CompletedTaskHandoff => {
                 write!(formatter, "completed tasks must be reopened before handoff")
+            }
+            Self::CompletedTaskDueChange => {
+                write!(
+                    formatter,
+                    "completed tasks must be reopened before changing the due time"
+                )
             }
             Self::DependencyBlocked(ids) => write!(
                 formatter,
@@ -473,6 +480,24 @@ impl RoomState {
         task.completed_criteria = completed_criteria;
         task.updated_at_epoch_seconds = now_epoch_seconds();
         self.record_activity(actor_id, format!("set task {task_id} to {status}"));
+        Ok(())
+    }
+
+    pub fn set_task_due(
+        &mut self,
+        actor_id: &str,
+        task_id: &str,
+        due_at_epoch_seconds: Option<u64>,
+    ) -> Result<(), DomainError> {
+        self.require_connected(actor_id)?;
+        let index = self.task_index(task_id)?;
+        self.require_task_writer(actor_id, &self.tasks[index])?;
+        if self.tasks[index].status == TaskStatus::Done {
+            return Err(DomainError::CompletedTaskDueChange);
+        }
+        self.tasks[index].due_at_epoch_seconds = due_at_epoch_seconds;
+        self.tasks[index].updated_at_epoch_seconds = now_epoch_seconds();
+        self.record_activity(actor_id, format!("changed due time for task {task_id}"));
         Ok(())
     }
 
@@ -737,6 +762,26 @@ mod tests {
         room.add_participant("host", participant("bob", "Bob"))
             .unwrap();
         room
+    }
+
+    #[test]
+    fn only_owner_or_host_changes_an_active_task_due_time() {
+        let mut room = room();
+        room.create_task("host", task("due", "alice", vec![]))
+            .unwrap();
+        assert_eq!(
+            room.set_task_due("bob", "due", Some(5_000)),
+            Err(DomainError::OnlyOwnerOrHostCanUpdate)
+        );
+        room.set_task_due("alice", "due", Some(5_000)).unwrap();
+        assert_eq!(room.tasks[0].due_at_epoch_seconds, Some(5_000));
+        room.set_task_due("host", "due", None).unwrap();
+        assert_eq!(room.tasks[0].due_at_epoch_seconds, None);
+        room.tasks[0].status = TaskStatus::Done;
+        assert_eq!(
+            room.set_task_due("host", "due", Some(6_000)),
+            Err(DomainError::CompletedTaskDueChange)
+        );
     }
 
     #[test]

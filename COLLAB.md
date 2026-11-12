@@ -28,7 +28,7 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## Log (newest first)
 
-- 2026-11-12 Codex: Added additive local task due times, overdue chip/filter and active task summary on `feat/local-room-task-due-times`. Old tasks default to no due time. Focused core/app tests and Clippy passed; desktop interaction pending. No reminder scheduler or network behavior claimed.
+- 2026-11-12 Codex: Added additive local task due times, authorized owner/host changes, overdue chip/filter and active task summary on `feat/local-room-task-due-times` (PR #38). Old tasks default to no due time. Focused core/app tests and Clippy passed; desktop interaction pending. No reminder scheduler or network behavior claimed.
 
 - 2026-11-12 Codex: Expanded the UI concept library to 32 images, with 20 restrained flat concepts in the active gallery. Added source-grounded design research and a local interactive HTML prototype for menus, tabs, rail views and selectors. This is a visual handoff only; the native Rust app was not changed. Older brighter concepts remain historical and are excluded from the curated gallery.
 

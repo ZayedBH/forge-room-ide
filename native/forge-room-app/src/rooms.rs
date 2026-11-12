@@ -29,6 +29,10 @@ enum Intent {
         status: TaskStatus,
         completed: Vec<String>,
     },
+    SetDue {
+        task: String,
+        hours: Option<u64>,
+    },
     RequestHandoff {
         task: String,
         target: String,
@@ -340,6 +344,10 @@ impl RoomView {
                 completed,
             } => {
                 self.mutate(|state, actor| state.transition_task(actor, &task, status, completed));
+            }
+            Intent::SetDue { task, hours } => {
+                let due = hours.map(|hours| now_epoch_seconds().saturating_add(hours * 3600));
+                self.mutate(|state, actor| state.set_task_due(actor, &task, due));
             }
             Intent::RequestHandoff { task, target } => {
                 self.mutate(|state, actor| state.request_handoff(actor, &task, &target));
@@ -1047,6 +1055,30 @@ impl RoomView {
     ) {
         let is_host = self.acting_as == state.host_id;
         let is_owner = self.acting_as == task.owner_id;
+
+        if task.status != TaskStatus::Done && (is_host || is_owner) {
+            ui.horizontal(|ui| {
+                ui.label(RichText::new("Due").color(theme::text_dim()));
+                egui::ComboBox::from_id_salt(("task-due-edit", &task.id))
+                    .selected_text("Change due time…")
+                    .show_ui(ui, |ui| {
+                        for (hours, label) in [
+                            (None, "Clear due time"),
+                            (Some(1), "In 1 hour"),
+                            (Some(4), "In 4 hours"),
+                            (Some(24), "Tomorrow"),
+                            (Some(72), "In 3 days"),
+                        ] {
+                            if ui.selectable_label(false, label).clicked() {
+                                intents.push(Intent::SetDue {
+                                    task: task.id.clone(),
+                                    hours,
+                                });
+                            }
+                        }
+                    });
+            });
+        }
 
         if !task.acceptance_criteria.is_empty() {
             ui.label(
