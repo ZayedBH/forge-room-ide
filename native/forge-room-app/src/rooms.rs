@@ -750,8 +750,14 @@ impl RoomView {
                             );
                         }
                     });
+            });
+            ui.horizontal_wrapped(|ui| {
+                ui.add_space(14.0);
                 ui.checkbox(&mut self.blocked_tasks_only, "Blocked only");
                 ui.checkbox(&mut self.overdue_tasks_only, "Overdue only");
+            });
+            ui.horizontal(|ui| {
+                ui.add_space(14.0);
                 if (!self.task_query.is_empty()
                     || self.task_status_filter.is_some()
                     || self.task_owner_filter.is_some()
