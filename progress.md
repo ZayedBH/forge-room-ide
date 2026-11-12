@@ -1,5 +1,7 @@
 # Forge Room — progress and complete working plan
 
+**12 November upstream integration (PR pending):** Five post-alpha.3 commits from `atul/native-rust-ide` were cherry-picked into an integration branch. They address agent stop/error handling, file/recovery path safety, paste and link behavior, search cancellation/regex, session handling, and terminal process cleanup. The branch touches only active native app source and preserves the newer design assets. Local Rust format, 263 tests (6 ignored) and Clippy passed. Visible Windows acceptance remains open; this does not close the related feature milestones.
+
 **12 November visual direction:** Twelve new native UI concept images are indexed at `docs/design/concept-images/2026-11-12/README.md`. Current effort is on visual concepts across product sections; do not treat them as implemented UI or continue in-app AI work without a new direction. PR #33 (agent panel, folder trust, terminals) was merged for 0.110.0-alpha.3.
 
 **12 November design follow-on:** The library now contains 32 images. The active gallery curates 20 flat, non-neon concepts; the first 12 are historical references. `DESIGN-RESEARCH.md` records source inventory, external IDE and accessibility references, sizing recommendations and interaction states. `prototype.html` demonstrates clickable menus, rail views, editor/Room/bottom tabs and selectors without changing native code.
