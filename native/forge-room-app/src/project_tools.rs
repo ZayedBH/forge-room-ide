@@ -176,6 +176,42 @@ fn actions(root: &Path, page: Page) -> Vec<Action> {
             _ => Vec::new(),
         };
     }
+    // The fixed commands let dotnet choose the single root solution or project. With multiple
+    // candidates it would choose unpredictably or fail, so do not offer an ambiguous action.
+    let dotnet_files = fs::read_dir(root).ok().map_or(0, |entries| {
+        entries
+            .filter_map(Result::ok)
+            .filter(|entry| {
+                let path = entry.path();
+                path.is_file()
+                    && path
+                        .extension()
+                        .and_then(|extension| extension.to_str())
+                        .is_some_and(|extension| {
+                            matches!(
+                                extension.to_ascii_lowercase().as_str(),
+                                "sln" | "slnx" | "csproj" | "fsproj" | "vbproj"
+                            )
+                        })
+            })
+            .take(2)
+            .count()
+    });
+    if dotnet_files == 1 {
+        return match page {
+            Page::Tests => vec![action(
+                "Run .NET tests",
+                "dotnet test",
+                "Runs tests for the root solution or project",
+            )],
+            Page::Workflows => vec![action(
+                "Build .NET project",
+                "dotnet build",
+                "Builds the root solution or project",
+            )],
+            _ => Vec::new(),
+        };
+    }
     Vec::new()
 }
 
@@ -274,4 +310,29 @@ pub fn show(
         }
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dotnet_actions_require_one_unambiguous_root_file() {
+        let folder = std::env::temp_dir().join(format!(
+            "forge-room-dotnet-actions-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir(&folder).unwrap();
+        fs::write(folder.join("Demo.sln"), "").unwrap();
+        assert_eq!(actions(&folder, Page::Workflows)[0].command, "dotnet build");
+        assert_eq!(actions(&folder, Page::Tests)[0].command, "dotnet test");
+        assert!(actions(&folder, Page::RunDebug).is_empty());
+        fs::write(folder.join("Other.csproj"), "").unwrap();
+        assert!(actions(&folder, Page::Tests).is_empty());
+        fs::remove_dir_all(folder).unwrap();
+    }
 }
