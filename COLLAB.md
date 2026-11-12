@@ -28,6 +28,7 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## Log (newest first)
 
+- 2026-11-12 Codex: Added explicit .NET and CMake project command discovery in `feat/dotnet-project-actions` (PR #37). One safe-named solution is preferred over sibling projects; ambiguous .NET roots are skipped. CMake exposes Configure, Build and CTest according to generated files. Focused tests passed; real projects and desktop trial pending. This is a daily IDE workflow slice, not debugger or language-server support.
 - 2026-11-12 Codex: Cherry-picked five post-alpha.3 Atul native app tester-fix commits onto `integrate/atul-alpha3-fixes` without the upstream branch's design-asset deletions. Scope is agent, file/recovery safety, search, session and terminal source; local format, 263 tests and Clippy passed. PR review is pending. No PR merge or branch deletion.
 - 2026-11-12 Codex: Added native Settings controls for persisted Auto Save, editor text size and layout reset, an accurate Models-to-AI-Agent action, and registry-backed shortcut help in Accessibility. This is a bounded I01 UI slice in PR #35; source compile passed, desktop interaction pending. `atul/native-rust-ide` still has unmerged fixes; its design-file deletions were not integrated.
 

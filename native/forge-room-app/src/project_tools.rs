@@ -178,6 +178,98 @@ fn actions(root: &Path, page: Page) -> Vec<Action> {
             _ => Vec::new(),
         };
     }
+    // Prefer one solution even when its projects also live at the root. Names are restricted
+    // before placing them in a PowerShell command; quoted or shell-special names are skipped.
+    let mut solutions = Vec::new();
+    let mut projects = Vec::new();
+    if let Ok(entries) = fs::read_dir(root) {
+        for entry in entries.filter_map(Result::ok) {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+                continue;
+            };
+            if name.len() > 120
+                || !name.bytes().all(|byte| {
+                    byte.is_ascii_alphanumeric() || matches!(byte, b' ' | b'_' | b'-' | b'.')
+                })
+            {
+                continue;
+            }
+            match path
+                .extension()
+                .and_then(|extension| extension.to_str())
+                .map(str::to_ascii_lowercase)
+                .as_deref()
+            {
+                Some("sln" | "slnx") => solutions.push(name.to_string()),
+                Some("csproj" | "fsproj" | "vbproj") => projects.push(name.to_string()),
+                _ => {}
+            }
+        }
+    }
+    let dotnet_target = if solutions.len() == 1 {
+        solutions.first()
+    } else if solutions.is_empty() && projects.len() == 1 {
+        projects.first()
+    } else {
+        None
+    };
+    if let Some(target) = dotnet_target {
+        return match page {
+            Page::Tests => vec![Action {
+                command: format!("dotnet test '{target}'"),
+                ..action(
+                    "Run .NET tests",
+                    "",
+                    "Runs tests for the selected root solution or project",
+                )
+            }],
+            Page::Workflows => vec![Action {
+                command: format!("dotnet build '{target}'"),
+                ..action(
+                    "Build .NET project",
+                    "",
+                    "Builds the selected root solution or project",
+                )
+            }],
+            _ => Vec::new(),
+        };
+    }
+    if root.join("CMakeLists.txt").is_file() {
+        let configured = root.join("build").join("CMakeCache.txt").is_file();
+        let tests_ready = root.join("build").join("CTestTestfile.cmake").is_file();
+        return match page {
+            Page::Workflows => {
+                let mut actions = vec![action(
+                    "Configure CMake",
+                    "cmake -S . -B build",
+                    "Generates build files in the project build folder",
+                )];
+                if configured {
+                    actions.push(action(
+                        "Build CMake project",
+                        "cmake --build build",
+                        "Builds the configured project",
+                    ));
+                }
+                actions
+            }
+            Page::Tests if tests_ready => vec![action(
+                "Run CTest tests",
+                "ctest --test-dir build --output-on-failure",
+                "Runs tests from the configured build folder",
+            )],
+            Page::Tests => vec![action(
+                "Configure CMake for tests",
+                "cmake -S . -B build",
+                "Configure the project, then return here to run CTest",
+            )],
+            _ => Vec::new(),
+        };
+    }
     Vec::new()
 }
 
@@ -338,4 +430,68 @@ pub fn show(
         }
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dotnet_actions_require_one_unambiguous_root_file() {
+        let folder = std::env::temp_dir().join(format!(
+            "forge-room-dotnet-actions-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir(&folder).unwrap();
+        fs::write(folder.join("Demo.sln"), "").unwrap();
+        assert_eq!(
+            actions(&folder, Page::Workflows)[0].command,
+            "dotnet build 'Demo.sln'"
+        );
+        assert_eq!(
+            actions(&folder, Page::Tests)[0].command,
+            "dotnet test 'Demo.sln'"
+        );
+        assert!(actions(&folder, Page::RunDebug).is_empty());
+        fs::write(folder.join("Other.csproj"), "").unwrap();
+        assert_eq!(
+            actions(&folder, Page::Tests)[0].command,
+            "dotnet test 'Demo.sln'"
+        );
+        fs::write(folder.join("Second.sln"), "").unwrap();
+        assert!(actions(&folder, Page::Tests).is_empty());
+        fs::remove_dir_all(folder).unwrap();
+    }
+
+    #[test]
+    fn cmake_actions_follow_configure_build_test_state() {
+        let folder = std::env::temp_dir().join(format!(
+            "forge-room-cmake-actions-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir(&folder).unwrap();
+        fs::write(folder.join("CMakeLists.txt"), "project(example)").unwrap();
+        assert_eq!(actions(&folder, Page::Workflows).len(), 1);
+        assert_eq!(
+            actions(&folder, Page::Tests)[0].command,
+            "cmake -S . -B build"
+        );
+        fs::create_dir(folder.join("build")).unwrap();
+        fs::write(folder.join("build").join("CMakeCache.txt"), "").unwrap();
+        assert_eq!(actions(&folder, Page::Workflows).len(), 2);
+        fs::write(folder.join("build").join("CTestTestfile.cmake"), "").unwrap();
+        assert_eq!(
+            actions(&folder, Page::Tests)[0].command,
+            "ctest --test-dir build --output-on-failure"
+        );
+        fs::remove_dir_all(folder).unwrap();
+    }
 }
