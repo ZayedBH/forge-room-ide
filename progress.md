@@ -6,6 +6,8 @@
 
 **12 November design follow-on:** The library now contains 32 images. The active gallery curates 20 flat, non-neon concepts; the first 12 are historical references. `DESIGN-RESEARCH.md` records source inventory, external IDE and accessibility references, sizing recommendations and interaction states. `prototype.html` demonstrates clickable menus, rail views, editor/Room/bottom tabs and selectors without changing native code.
 
+**12 November Gradle project actions (stacked PR pending):** The native Workflows and Tests panels discover a root Gradle build file and offer explicit build/test buttons. A project wrapper is preferred when present; no command starts during discovery. Three focused project-action tests and Clippy pass. The branch builds on the .NET/CMake action PR and needs that PR before merging.
+
 **Updated:** 12 November 2026. **Active product:** native Rust IDE, Developer Preview `0.110.0-alpha.3`, Windows 11 x64. **Current phase:** Phase 1, visible Windows baseline. **Owners:** @ZayedBH and @Atul013.
 
 **9 November local feature slice:** The native left rail now opens Workflows, Models, Run & Debug, Tests, Extensions, Settings, and Accessibility panels. Rust, Node, and Python marker files expose a small set of explicit project commands; pressing a command sends it to the integrated terminal. Debugger adapters, AI model providers, and extension execution remain unavailable and are labelled as such. Source inspection complete; this shell has no `cargo` command, so Rust compilation and desktop acceptance are pending.

@@ -176,6 +176,32 @@ fn actions(root: &Path, page: Page) -> Vec<Action> {
             _ => Vec::new(),
         };
     }
+    if root.join("build.gradle").is_file() || root.join("build.gradle.kts").is_file() {
+        let runner = if root.join("gradlew.bat").is_file() {
+            ".\\gradlew.bat"
+        } else {
+            "gradle"
+        };
+        return match page {
+            Page::Tests => vec![Action {
+                command: format!("{runner} test"),
+                ..action(
+                    "Run Gradle tests",
+                    "",
+                    "Runs project code; inspect build.gradle before running",
+                )
+            }],
+            Page::Workflows => vec![Action {
+                command: format!("{runner} build"),
+                ..action(
+                    "Build Gradle project",
+                    "",
+                    "Runs project code; inspect build.gradle before running",
+                )
+            }],
+            _ => Vec::new(),
+        };
+    }
     // Prefer one solution even when its projects also live at the root. Names are restricted
     // before placing them in a PowerShell command; quoted or shell-special names are skipped.
     let mut solutions = Vec::new();
@@ -371,6 +397,28 @@ pub fn show(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn gradle_actions_prefer_project_wrapper() {
+        let folder = std::env::temp_dir().join(format!(
+            "forge-room-gradle-actions-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir(&folder).unwrap();
+        fs::write(folder.join("build.gradle.kts"), "").unwrap();
+        assert_eq!(actions(&folder, Page::Tests)[0].command, "gradle test");
+        fs::write(folder.join("gradlew.bat"), "").unwrap();
+        assert_eq!(
+            actions(&folder, Page::Workflows)[0].command,
+            ".\\gradlew.bat build"
+        );
+        assert!(actions(&folder, Page::RunDebug).is_empty());
+        fs::remove_dir_all(folder).unwrap();
+    }
 
     #[test]
     fn dotnet_actions_require_one_unambiguous_root_file() {
