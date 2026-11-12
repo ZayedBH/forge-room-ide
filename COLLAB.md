@@ -28,7 +28,7 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## Log (newest first)
 
-- 2026-11-12 Codex: Added explicit .NET and CMake project command discovery in `feat/dotnet-project-actions` (PR #37). Ambiguous .NET roots are skipped; CMake exposes Configure, Build and CTest according to generated files. Focused tests passed; real projects and desktop trial pending. This is a daily IDE workflow slice, not debugger or language-server support.
+- 2026-11-12 Codex: Added explicit .NET and CMake project command discovery in `feat/dotnet-project-actions` (PR #37). One safe-named solution is preferred over sibling projects; ambiguous .NET roots are skipped. CMake exposes Configure, Build and CTest according to generated files. Focused tests passed; real projects and desktop trial pending. This is a daily IDE workflow slice, not debugger or language-server support.
 
 - 2026-11-12 Codex: Expanded the UI concept library to 32 images, with 20 restrained flat concepts in the active gallery. Added source-grounded design research and a local interactive HTML prototype for menus, tabs, rail views and selectors. This is a visual handoff only; the native Rust app was not changed. Older brighter concepts remain historical and are excluded from the curated gallery.
 

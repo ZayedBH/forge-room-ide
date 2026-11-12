@@ -176,39 +176,63 @@ fn actions(root: &Path, page: Page) -> Vec<Action> {
             _ => Vec::new(),
         };
     }
-    // The fixed commands let dotnet choose the single root solution or project. With multiple
-    // candidates it would choose unpredictably or fail, so do not offer an ambiguous action.
-    let dotnet_files = fs::read_dir(root).ok().map_or(0, |entries| {
-        entries
-            .filter_map(Result::ok)
-            .filter(|entry| {
-                let path = entry.path();
-                path.is_file()
-                    && path
-                        .extension()
-                        .and_then(|extension| extension.to_str())
-                        .is_some_and(|extension| {
-                            matches!(
-                                extension.to_ascii_lowercase().as_str(),
-                                "sln" | "slnx" | "csproj" | "fsproj" | "vbproj"
-                            )
-                        })
-            })
-            .take(2)
-            .count()
-    });
-    if dotnet_files == 1 {
+    // Prefer one solution even when its projects also live at the root. Names are restricted
+    // before placing them in a PowerShell command; quoted or shell-special names are skipped.
+    let mut solutions = Vec::new();
+    let mut projects = Vec::new();
+    if let Ok(entries) = fs::read_dir(root) {
+        for entry in entries.filter_map(Result::ok) {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+                continue;
+            };
+            if name.len() > 120
+                || !name.bytes().all(|byte| {
+                    byte.is_ascii_alphanumeric() || matches!(byte, b' ' | b'_' | b'-' | b'.')
+                })
+            {
+                continue;
+            }
+            match path
+                .extension()
+                .and_then(|extension| extension.to_str())
+                .map(str::to_ascii_lowercase)
+                .as_deref()
+            {
+                Some("sln" | "slnx") => solutions.push(name.to_string()),
+                Some("csproj" | "fsproj" | "vbproj") => projects.push(name.to_string()),
+                _ => {}
+            }
+        }
+    }
+    let dotnet_target = if solutions.len() == 1 {
+        solutions.first()
+    } else if solutions.is_empty() && projects.len() == 1 {
+        projects.first()
+    } else {
+        None
+    };
+    if let Some(target) = dotnet_target {
         return match page {
-            Page::Tests => vec![action(
-                "Run .NET tests",
-                "dotnet test",
-                "Runs tests for the root solution or project",
-            )],
-            Page::Workflows => vec![action(
-                "Build .NET project",
-                "dotnet build",
-                "Builds the root solution or project",
-            )],
+            Page::Tests => vec![Action {
+                command: format!("dotnet test '{target}'"),
+                ..action(
+                    "Run .NET tests",
+                    "",
+                    "Runs tests for the selected root solution or project",
+                )
+            }],
+            Page::Workflows => vec![Action {
+                command: format!("dotnet build '{target}'"),
+                ..action(
+                    "Build .NET project",
+                    "",
+                    "Builds the selected root solution or project",
+                )
+            }],
             _ => Vec::new(),
         };
     }
@@ -360,10 +384,21 @@ mod tests {
         ));
         fs::create_dir(&folder).unwrap();
         fs::write(folder.join("Demo.sln"), "").unwrap();
-        assert_eq!(actions(&folder, Page::Workflows)[0].command, "dotnet build");
-        assert_eq!(actions(&folder, Page::Tests)[0].command, "dotnet test");
+        assert_eq!(
+            actions(&folder, Page::Workflows)[0].command,
+            "dotnet build 'Demo.sln'"
+        );
+        assert_eq!(
+            actions(&folder, Page::Tests)[0].command,
+            "dotnet test 'Demo.sln'"
+        );
         assert!(actions(&folder, Page::RunDebug).is_empty());
         fs::write(folder.join("Other.csproj"), "").unwrap();
+        assert_eq!(
+            actions(&folder, Page::Tests)[0].command,
+            "dotnet test 'Demo.sln'"
+        );
+        fs::write(folder.join("Second.sln"), "").unwrap();
         assert!(actions(&folder, Page::Tests).is_empty());
         fs::remove_dir_all(folder).unwrap();
     }
