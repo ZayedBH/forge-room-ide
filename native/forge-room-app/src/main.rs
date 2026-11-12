@@ -2486,21 +2486,19 @@ impl ForgeRoomApp {
         ui: &mut egui::Ui,
         item: Rail,
         icon: &str,
-        label: &str,
+        _label: &str,
         tip: &str,
         count: usize,
     ) {
-        let soon = false;
         let height = 40.0;
-        let (rect, response) = ui.allocate_exact_size(
-            egui::vec2(ACTIVITY_WIDTH - 8.0, height),
-            if soon {
-                egui::Sense::hover()
-            } else {
-                egui::Sense::click()
-            },
-        );
-        let rect = rect.translate(egui::vec2(4.0, 0.0));
+        let response = ui
+            .add_sized(
+                egui::vec2(ACTIVITY_WIDTH - 8.0, height),
+                egui::Button::new("").frame(false),
+            )
+            .accessible_name(tip)
+            .on_hover_text(tip);
+        let rect = response.rect.translate(egui::vec2(4.0, 0.0));
         let active = match item {
             Rail::View(view) => !self.show_lobby && self.show_sidebar && self.view == view,
             Rail::Terminal => !self.show_lobby && self.show_terminal,
@@ -2511,16 +2509,22 @@ impl ForgeRoomApp {
             }
             Rail::Studio => false,
         };
-        let hovered = response.hovered() && !soon;
+        let hovered = response.hovered();
         let painter = ui.painter();
         if active {
             painter.rect_filled(rect, 5.0, theme::nav_active());
         } else if hovered {
             painter.rect_filled(rect, 8.0, theme::overlay(12));
         }
-        let color = if soon {
-            theme::mix(theme::bg_activity(), theme::text_dim(), 0.6)
-        } else if active || hovered {
+        if response.has_focus() {
+            painter.rect_stroke(
+                rect,
+                5.0,
+                egui::Stroke::new(2.0, theme::accent()),
+                egui::StrokeKind::Inside,
+            );
+        }
+        let color = if active || hovered {
             theme::text()
         } else {
             theme::text_dim()
@@ -2531,8 +2535,6 @@ impl ForgeRoomApp {
             icon
         };
         icons::draw(painter, icon_name, rect.center(), 19.0, color);
-        // The compact rail uses the accessible hover label rather than truncating names.
-        let _ = label;
         if count > 0 {
             let center = egui::pos2(rect.right() - 8.0, rect.top() + 9.0);
             painter.circle_filled(center, 7.0, theme::badge());
@@ -2544,7 +2546,7 @@ impl ForgeRoomApp {
                 theme::badge_text(),
             );
         }
-        if response.on_hover_text(tip).clicked() {
+        if response.clicked() {
             match item {
                 Rail::View(view) => {
                     let showing = self.show_sidebar && self.view == view && !self.show_lobby;
