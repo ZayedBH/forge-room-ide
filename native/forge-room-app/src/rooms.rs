@@ -234,6 +234,29 @@ impl RoomView {
             .unwrap_or(0)
     }
 
+    pub fn overdue_task_count(&self) -> usize {
+        let now = now_epoch_seconds();
+        self.state
+            .as_ref()
+            .map(|state| {
+                state
+                    .tasks
+                    .iter()
+                    .filter(|task| task_is_overdue(task, now))
+                    .count()
+            })
+            .unwrap_or(0)
+    }
+
+    pub fn show_overdue_tasks(&mut self) {
+        self.task_query.clear();
+        self.task_status_filter = None;
+        self.task_owner_filter = None;
+        self.blocked_tasks_only = false;
+        self.overdue_tasks_only = true;
+        self.tasks_open = true;
+    }
+
     fn mutate(
         &mut self,
         change: impl FnOnce(&mut RoomState, &str) -> Result<(), forge_room_core::DomainError>,
@@ -1874,6 +1897,25 @@ mod tests {
         assert_eq!(due_label(7_200, 7_200), "Overdue by 1h");
         task.status = TaskStatus::Done;
         assert!(!task_is_overdue(&task, 10_000));
+        task.status = TaskStatus::Open;
+        let mut view = RoomView {
+            state: Some(RoomState::new(
+                "local",
+                Participant {
+                    id: "owner".into(),
+                    name: "Owner".into(),
+                    role: Role::Human,
+                    owner_id: None,
+                },
+            )),
+            ..Default::default()
+        };
+        view.state.as_mut().unwrap().tasks.push(task);
+        view.task_query = "unrelated".into();
+        assert_eq!(view.overdue_task_count(), 1);
+        view.show_overdue_tasks();
+        assert!(view.overdue_tasks_only);
+        assert!(view.task_query.is_empty());
     }
 
     #[test]

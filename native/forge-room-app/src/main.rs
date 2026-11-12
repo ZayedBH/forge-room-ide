@@ -4681,6 +4681,8 @@ impl ForgeRoomApp {
             self.show_preview = !self.show_preview;
         }
         let mut open_activity = false;
+        let mut open_overdue = false;
+        let overdue = self.room.overdue_task_count();
         ui.horizontal_centered(|ui| {
             let (icon, _) = ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
             icons::draw(ui.painter(), "pulse", icon.center(), 18.0, theme::accent());
@@ -4697,6 +4699,14 @@ impl ForgeRoomApp {
                 );
                 return;
             };
+            if overdue > 0
+                && ui
+                    .add(egui::Button::new(format!("{overdue} overdue")).frame(false))
+                    .on_hover_text("Open overdue local Room tasks")
+                    .clicked()
+            {
+                open_overdue = true;
+            }
             if state.activity.is_empty() {
                 ui.label(egui::RichText::new("No activity yet").color(theme::text_dim()));
                 return;
@@ -4740,6 +4750,12 @@ impl ForgeRoomApp {
         });
         if open_activity {
             self.show_dock(RightTab::Activity);
+        }
+        if open_overdue {
+            self.room.show_overdue_tasks();
+            self.show_lobby = false;
+            self.show_right = true;
+            self.right_tab = RightTab::Tasks;
         }
     }
 

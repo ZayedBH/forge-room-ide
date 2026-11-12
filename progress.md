@@ -1,6 +1,6 @@
 # Forge Room — progress and complete working plan
 
-**12 November local task due times (PR #38):** New local Room tasks can have a relative due time (1, 4, 24 or 72 hours). An owner or host can change or clear it while the task is active. Task cards show due/overdue hours, the list can filter overdue work, and copied active summaries include due state. Old saved tasks load with no due time. This is local display/filter behavior, not reminders, network synchronization, or the R05 two-client gate. Focused core and app tests plus Clippy passed; visible desktop interaction remains open.
+**12 November local task due times (PR #38):** New local Room tasks can have a relative due time (1, 4, 24 or 72 hours). An owner or host can change or clear it while the task is active. Task cards show due/overdue hours, the list can filter overdue work, and the Room Pulse links directly to overdue tasks. Copied active summaries include due state. Old saved tasks load with no due time. This is local display/filter behavior, not reminders, network synchronization, or the R05 two-client gate. Focused core and app tests plus Clippy passed; visible desktop interaction remains open.
 
 **12 November visual direction:** Twelve new native UI concept images are indexed at `docs/design/concept-images/2026-11-12/README.md`. Current effort is on visual concepts across product sections; do not treat them as implemented UI or continue in-app AI work without a new direction. PR #33 (agent panel, folder trust, terminals) was merged for 0.110.0-alpha.3.
 
