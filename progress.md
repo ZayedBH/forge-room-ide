@@ -1,6 +1,6 @@
 # Forge Room — progress and complete working plan
 
-**12 November .NET workflow slice (PR pending):** Workflows and Tests discover a single root `.sln`, `.slnx`, `.csproj`, `.fsproj`, or `.vbproj` file and offer fixed `dotnet build` / `dotnet test` buttons. Multiple root candidates are left undiscovered to avoid running an ambiguous command. Commands still require a trusted folder and an explicit terminal button. A focused discovery test passed; real .NET project and desktop acceptance remain open.
+**12 November .NET/CMake workflow slice (PR #37):** Workflows and Tests discover a single root `.sln`, `.slnx`, `.csproj`, `.fsproj`, or `.vbproj` file and offer fixed `dotnet build` / `dotnet test` buttons. Multiple root candidates are left undiscovered to avoid running an ambiguous command. A root `CMakeLists.txt` offers Configure, then Build after a cache exists, and CTest after test metadata exists. Commands still require a trusted folder and an explicit terminal button. Focused discovery tests passed; real .NET/CMake projects and desktop acceptance remain open.
 
 **12 November visual direction:** Twelve new native UI concept images are indexed at `docs/design/concept-images/2026-11-12/README.md`. Current effort is on visual concepts across product sections; do not treat them as implemented UI or continue in-app AI work without a new direction. PR #33 (agent panel, folder trust, terminals) was merged for 0.110.0-alpha.3.
 

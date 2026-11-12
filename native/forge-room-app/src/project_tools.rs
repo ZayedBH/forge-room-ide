@@ -212,6 +212,38 @@ fn actions(root: &Path, page: Page) -> Vec<Action> {
             _ => Vec::new(),
         };
     }
+    if root.join("CMakeLists.txt").is_file() {
+        let configured = root.join("build").join("CMakeCache.txt").is_file();
+        let tests_ready = root.join("build").join("CTestTestfile.cmake").is_file();
+        return match page {
+            Page::Workflows => {
+                let mut actions = vec![action(
+                    "Configure CMake",
+                    "cmake -S . -B build",
+                    "Generates build files in the project build folder",
+                )];
+                if configured {
+                    actions.push(action(
+                        "Build CMake project",
+                        "cmake --build build",
+                        "Builds the configured project",
+                    ));
+                }
+                actions
+            }
+            Page::Tests if tests_ready => vec![action(
+                "Run CTest tests",
+                "ctest --test-dir build --output-on-failure",
+                "Runs tests from the configured build folder",
+            )],
+            Page::Tests => vec![action(
+                "Configure CMake for tests",
+                "cmake -S . -B build",
+                "Configure the project, then return here to run CTest",
+            )],
+            _ => Vec::new(),
+        };
+    }
     Vec::new()
 }
 
@@ -333,6 +365,34 @@ mod tests {
         assert!(actions(&folder, Page::RunDebug).is_empty());
         fs::write(folder.join("Other.csproj"), "").unwrap();
         assert!(actions(&folder, Page::Tests).is_empty());
+        fs::remove_dir_all(folder).unwrap();
+    }
+
+    #[test]
+    fn cmake_actions_follow_configure_build_test_state() {
+        let folder = std::env::temp_dir().join(format!(
+            "forge-room-cmake-actions-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir(&folder).unwrap();
+        fs::write(folder.join("CMakeLists.txt"), "project(example)").unwrap();
+        assert_eq!(actions(&folder, Page::Workflows).len(), 1);
+        assert_eq!(
+            actions(&folder, Page::Tests)[0].command,
+            "cmake -S . -B build"
+        );
+        fs::create_dir(folder.join("build")).unwrap();
+        fs::write(folder.join("build").join("CMakeCache.txt"), "").unwrap();
+        assert_eq!(actions(&folder, Page::Workflows).len(), 2);
+        fs::write(folder.join("build").join("CTestTestfile.cmake"), "").unwrap();
+        assert_eq!(
+            actions(&folder, Page::Tests)[0].command,
+            "ctest --test-dir build --output-on-failure"
+        );
         fs::remove_dir_all(folder).unwrap();
     }
 }
