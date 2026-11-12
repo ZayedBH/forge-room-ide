@@ -1,5 +1,7 @@
 # Forge Room UI concepts — 12 November 2026
 
+**New redesign set:** [Eight generated major-screen concepts](redesign-v2/README.md) and their [visual gallery](redesign-v2/gallery.html). This is a separate, selected follow-on set; the earlier 32-image library below remains available for comparison.
+
 Thirty-two generated visual explorations for the native Forge Room product. The [interactive gallery](gallery.html) curates twenty flat, restrained concepts (13–32). The [interaction prototype](prototype.html) makes the main rail, editor tabs, Room tabs, bottom tabs, menus, selectors and confirmation flow clickable. Both HTML files run locally with no dependencies. Images 01–12 are the earlier exploration and are retained as historical references; several use brighter treatments that are no longer the chosen direction. These are design references, not screenshots or implementation claims. In-image text and controls may be approximate. The existing native Rust app and roadmap remain the source of truth for available behavior. Read [the design research](DESIGN-RESEARCH.md) for evidence, dimensions and interaction requirements.
 
 | Image | Section |
