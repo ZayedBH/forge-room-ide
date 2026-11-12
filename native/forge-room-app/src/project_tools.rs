@@ -319,11 +319,22 @@ pub fn show(
         }
         Page::Accessibility => {
             ui.label("Keyboard access");
-            ui.label("Ctrl+Shift+E  Explorer");
-            ui.label("Ctrl+Shift+F  Search");
-            ui.label("Ctrl+Shift+G  Source Control");
-            ui.label("Ctrl+`  Terminal");
+            ui.small("Commands with assigned shortcuts in this preview:");
             ui.small("Theme contrast can be changed in Studio.");
+            ui.add_space(6.0);
+            egui::ScrollArea::vertical()
+                .id_salt("keyboard_shortcuts")
+                .show(ui, |ui| {
+                    for (_, title, shortcut) in crate::commands::ALL {
+                        if shortcut.is_empty() {
+                            continue;
+                        }
+                        ui.horizontal(|ui| {
+                            ui.monospace(*shortcut);
+                            ui.label(*title);
+                        });
+                    }
+                });
         }
     }
     None

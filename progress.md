@@ -1,6 +1,6 @@
 # Forge Room — progress and complete working plan
 
-**12 November settings follow-on (PR pending):** Native Settings now exposes persisted Auto Save and editor font-size controls plus Reset Layout. The Models panel links to the installed-CLI AI Agent flow and no longer claims providers are wholly disconnected. Source compile passed; visible Windows interaction remains to be checked. This is a bounded part of I01, not full keybinding customization.
+**12 November settings follow-on (PR #35):** Native Settings now exposes persisted Auto Save and editor font-size controls plus Reset Layout. The Models panel links to the installed-CLI AI Agent flow and no longer claims providers are wholly disconnected. Accessibility lists assigned shortcuts from the command registry. Source compile passed; visible Windows interaction remains to be checked. This is a bounded part of I01, not full keybinding customization.
 
 **12 November visual direction:** Twelve new native UI concept images are indexed at `docs/design/concept-images/2026-11-12/README.md`. Current effort is on visual concepts across product sections; do not treat them as implemented UI or continue in-app AI work without a new direction. PR #33 (agent panel, folder trust, terminals) was merged for 0.110.0-alpha.3.
 

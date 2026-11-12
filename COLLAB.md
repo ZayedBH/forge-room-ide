@@ -28,7 +28,7 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## Log (newest first)
 
-- 2026-11-12 Codex: Added native Settings controls for persisted Auto Save, editor text size and layout reset, plus an accurate Models-to-AI-Agent action. This is a bounded I01 UI slice on `feat/native-settings-controls`; source compile passed, desktop interaction pending. `atul/native-rust-ide` still has unmerged fixes; its design-file deletions were not integrated.
+- 2026-11-12 Codex: Added native Settings controls for persisted Auto Save, editor text size and layout reset, an accurate Models-to-AI-Agent action, and registry-backed shortcut help in Accessibility. This is a bounded I01 UI slice in PR #35; source compile passed, desktop interaction pending. `atul/native-rust-ide` still has unmerged fixes; its design-file deletions were not integrated.
 
 - 2026-11-12 Codex: Expanded the UI concept library to 32 images, with 20 restrained flat concepts in the active gallery. Added source-grounded design research and a local interactive HTML prototype for menus, tabs, rail views and selectors. This is a visual handoff only; the native Rust app was not changed. Older brighter concepts remain historical and are excluded from the curated gallery.
 
