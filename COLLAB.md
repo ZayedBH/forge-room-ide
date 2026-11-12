@@ -28,6 +28,8 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## Log (newest first)
 
+- 2026-11-12 Codex: Expanded the UI concept library to 32 images, with 20 restrained flat concepts in the active gallery. Added source-grounded design research and a local interactive HTML prototype for menus, tabs, rail views and selectors. This is a visual handoff only; the native Rust app was not changed. Older brighter concepts remain historical and are excluded from the curated gallery.
+
 - 2026-11-12 Codex: Generated twelve native Forge Room UI concept images in `docs/design/concept-images/2026-11-12/` covering the workspace, lobby, chat, tasks, Git, run/tests/debug, Studio, Ship Mode, first run, activity, extensions, and Pocket. User redirected current effort away from in-app AI work; the open upstream AI-heavy PR was not integrated. Concepts are visual references, not runtime claims.
 
 - 2026-11-09 Codex: PR #29 local Room decisions passed Windows core and graphical CI and merged. PRs #27-#29 now provide local Chat, task links, and decisions; desktop and two-client acceptance remain open. No open PRs remain on the main repository.
