@@ -5,7 +5,8 @@
 use crate::{icons, room_state, theme};
 use eframe::egui::{self, Align2, Color32, FontId, Margin, Rect, RichText, Sense, Stroke};
 use forge_room_core::{
-    EvidenceKind, Participant, Role, RoomState, StateStore, Task, TaskStatus, now_epoch_seconds,
+    EvidenceKind, Participant, Role, RoomState, StateStore, Task, TaskPriority, TaskStatus,
+    now_epoch_seconds,
 };
 use std::collections::HashSet;
 use std::path::Path;
@@ -23,6 +24,7 @@ enum Intent {
         criteria: Vec<String>,
         dependencies: Vec<String>,
         due_hours: Option<u64>,
+        priority: TaskPriority,
     },
     Transition {
         task: String,
@@ -32,6 +34,10 @@ enum Intent {
     SetDue {
         task: String,
         hours: Option<u64>,
+    },
+    SetPriority {
+        task: String,
+        priority: TaskPriority,
     },
     RequestHandoff {
         task: String,
@@ -59,6 +65,7 @@ struct NewTask {
     criteria: String,
     dependencies: HashSet<String>,
     due_hours: Option<u64>,
+    priority: TaskPriority,
 }
 
 #[derive(Default)]
@@ -101,6 +108,7 @@ pub struct RoomView {
     expanded: Option<String>,
     task_query: String,
     task_status_filter: Option<TaskStatus>,
+    task_priority_filter: Option<TaskPriority>,
     task_owner_filter: Option<String>,
     blocked_tasks_only: bool,
     overdue_tasks_only: bool,
@@ -138,6 +146,7 @@ impl Default for RoomView {
             task_query: String::new(),
             task_owner_filter: None,
             task_status_filter: None,
+            task_priority_filter: None,
             blocked_tasks_only: false,
             overdue_tasks_only: false,
             focus_new_task: false,
@@ -331,6 +340,7 @@ impl RoomView {
                 criteria,
                 dependencies,
                 due_hours,
+                priority,
             } => {
                 let ok = self.mutate(|state, actor| {
                     let owner_name = state
@@ -347,6 +357,7 @@ impl RoomView {
                             owner_id: owner.clone(),
                             owner_name,
                             status: TaskStatus::Open,
+                            priority,
                             dependencies: dependencies.clone(),
                             acceptance_criteria: criteria.clone(),
                             completed_criteria: Vec::new(),
@@ -371,6 +382,9 @@ impl RoomView {
             Intent::SetDue { task, hours } => {
                 let due = hours.map(|hours| now_epoch_seconds().saturating_add(hours * 3600));
                 self.mutate(|state, actor| state.set_task_due(actor, &task, due));
+            }
+            Intent::SetPriority { task, priority } => {
+                self.mutate(|state, actor| state.set_task_priority(actor, &task, priority));
             }
             Intent::RequestHandoff { task, target } => {
                 self.mutate(|state, actor| state.request_handoff(actor, &task, &target));
@@ -728,6 +742,28 @@ impl RoomView {
             });
             ui.horizontal(|ui| {
                 ui.add_space(14.0);
+                egui::ComboBox::from_id_salt("task-priority-filter")
+                    .selected_text(
+                        self.task_priority_filter
+                            .map_or("All priorities", priority_label),
+                    )
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.task_priority_filter, None, "All priorities");
+                        for priority in [
+                            TaskPriority::Normal,
+                            TaskPriority::High,
+                            TaskPriority::Critical,
+                        ] {
+                            ui.selectable_value(
+                                &mut self.task_priority_filter,
+                                Some(priority),
+                                priority_label(priority),
+                            );
+                        }
+                    });
+            });
+            ui.horizontal(|ui| {
+                ui.add_space(14.0);
                 let selected_owner = self
                     .task_owner_filter
                     .as_ref()
@@ -760,6 +796,7 @@ impl RoomView {
                 ui.add_space(14.0);
                 if (!self.task_query.is_empty()
                     || self.task_status_filter.is_some()
+                    || self.task_priority_filter.is_some()
                     || self.task_owner_filter.is_some()
                     || self.blocked_tasks_only
                     || self.overdue_tasks_only)
@@ -767,6 +804,7 @@ impl RoomView {
                 {
                     self.task_query.clear();
                     self.task_status_filter = None;
+                    self.task_priority_filter = None;
                     self.task_owner_filter = None;
                     self.blocked_tasks_only = false;
                     self.overdue_tasks_only = false;
@@ -794,6 +832,9 @@ impl RoomView {
                         && self
                             .task_status_filter
                             .is_none_or(|selected| selected == status)
+                        && self
+                            .task_priority_filter
+                            .is_none_or(|selected| selected == task.priority)
                         && self
                             .task_owner_filter
                             .as_ref()
@@ -888,6 +929,24 @@ impl RoomView {
                         }
                     });
             });
+            ui.horizontal(|ui| {
+                ui.label(RichText::new("Priority").color(theme::text_dim()));
+                egui::ComboBox::from_id_salt("new-task-priority")
+                    .selected_text(priority_label(self.new_task.priority))
+                    .show_ui(ui, |ui| {
+                        for priority in [
+                            TaskPriority::Normal,
+                            TaskPriority::High,
+                            TaskPriority::Critical,
+                        ] {
+                            ui.selectable_value(
+                                &mut self.new_task.priority,
+                                priority,
+                                priority_label(priority),
+                            );
+                        }
+                    });
+            });
             if !state.tasks.is_empty() {
                 ui.label(RichText::new("Needs first").color(theme::text_dim()));
                 for task in &state.tasks {
@@ -929,6 +988,7 @@ impl RoomView {
                             .collect(),
                         dependencies,
                         due_hours: self.new_task.due_hours,
+                        priority: self.new_task.priority,
                     });
                 }
                 if ui.button("Cancel").clicked() {
@@ -1003,6 +1063,18 @@ impl RoomView {
                         theme::text(),
                         theme::mix(theme::bg_sidebar(), theme::text(), 0.12),
                     );
+                    if task.priority != TaskPriority::Normal {
+                        chip(
+                            ui,
+                            priority_label(task.priority),
+                            if task.priority == TaskPriority::Critical {
+                                RED
+                            } else {
+                                AMBER
+                            },
+                            theme::mix(theme::bg_sidebar(), theme::text(), 0.08),
+                        );
+                    }
                     if !task.acceptance_criteria.is_empty() {
                         let done = task.completed_criteria.len();
                         chip(
@@ -1086,6 +1158,31 @@ impl RoomView {
         let is_owner = self.acting_as == task.owner_id;
 
         if task.status != TaskStatus::Done && (is_host || is_owner) {
+            ui.horizontal(|ui| {
+                ui.label(RichText::new("Priority").color(theme::text_dim()));
+                egui::ComboBox::from_id_salt(("task-priority-edit", &task.id))
+                    .selected_text(priority_label(task.priority))
+                    .show_ui(ui, |ui| {
+                        for priority in [
+                            TaskPriority::Normal,
+                            TaskPriority::High,
+                            TaskPriority::Critical,
+                        ] {
+                            if ui
+                                .selectable_label(
+                                    task.priority == priority,
+                                    priority_label(priority),
+                                )
+                                .clicked()
+                            {
+                                intents.push(Intent::SetPriority {
+                                    task: task.id.clone(),
+                                    priority,
+                                });
+                            }
+                        }
+                    });
+            });
             ui.horizontal(|ui| {
                 ui.label(RichText::new("Due").color(theme::text_dim()));
                 egui::ComboBox::from_id_salt(("task-due-edit", &task.id))
@@ -1804,6 +1901,9 @@ fn task_summary(state: &RoomState, task: &Task) -> String {
         format!("Owner: {}", task.owner_name),
         format!("Status: {status}"),
     ];
+    if task.priority != TaskPriority::Normal {
+        lines.push(format!("Priority: {}", priority_label(task.priority)));
+    }
     if let Some(due) = task
         .due_at_epoch_seconds
         .filter(|_| task.status != TaskStatus::Done)
@@ -1852,6 +1952,14 @@ fn task_is_overdue(task: &Task, now: u64) -> bool {
     task.status != TaskStatus::Done && task.due_at_epoch_seconds.is_some_and(|due| due <= now)
 }
 
+fn priority_label(priority: TaskPriority) -> &'static str {
+    match priority {
+        TaskPriority::Normal => "Normal",
+        TaskPriority::High => "High",
+        TaskPriority::Critical => "Critical",
+    }
+}
+
 fn due_label(due: u64, now: u64) -> String {
     if due <= now {
         let hours = now.saturating_sub(due).div_ceil(3600).max(1);
@@ -1890,6 +1998,7 @@ mod tests {
             owner_id: "owner".into(),
             owner_name: "Owner".into(),
             status: TaskStatus::Open,
+            priority: TaskPriority::Normal,
             dependencies: Vec::new(),
             acceptance_criteria: Vec::new(),
             completed_criteria: Vec::new(),
@@ -1947,6 +2056,7 @@ mod tests {
             owner_id: "host".into(),
             owner_name: "Host".into(),
             status: TaskStatus::Open,
+            priority: TaskPriority::Normal,
             dependencies: Vec::new(),
             acceptance_criteria: Vec::new(),
             completed_criteria: Vec::new(),
@@ -1984,6 +2094,7 @@ mod tests {
             owner_id: "host".into(),
             owner_name: "Host".into(),
             status: TaskStatus::InProgress,
+            priority: TaskPriority::Normal,
             dependencies: vec!["missing".into()],
             acceptance_criteria: vec!["Tests pass".into()],
             completed_criteria: vec!["Tests pass".into()],
