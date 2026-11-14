@@ -1963,13 +1963,26 @@ impl ForgeRoomApp {
             mark::draw(ui.painter(), logo.center(), 24.0);
             ui.add_space(4.0);
             // The design has no menu strip: File, Edit and View live under the brand name.
-            ui.menu_button(
+            let brand_menu = ui.menu_button(
                 egui::RichText::new("Forge Room")
                     .size(16.0)
                     .family(fonts::semibold())
                     .color(theme::text()),
                 |ui| self.menu_bar(ui),
             );
+            // The brand menu contains nested menus. A click on the editor or another
+            // background panel should dismiss the whole stack, including an open submenu.
+            // Foreground layers contain the menu itself, so clicks on its items stay active.
+            if !brand_menu.response.clicked()
+                && ui.input(|input| input.pointer.any_click())
+                && let Some(position) = ui.input(|input| input.pointer.interact_pos())
+                && ui
+                    .ctx()
+                    .layer_id_at(position)
+                    .is_none_or(|layer| layer.order != egui::Order::Foreground)
+            {
+                egui::Popup::close_all(ui.ctx());
+            }
             ui.add_space(10.0);
             self.title_chips(ui, bar.width());
 
@@ -2195,6 +2208,16 @@ impl ForgeRoomApp {
                         }
                         ui.close();
                     }
+                }
+                if ui
+                    .add_enabled(self.workspace.is_some(), egui::Button::new("New Folder"))
+                    .clicked()
+                {
+                    if let Some(workspace) = &self.workspace {
+                        self.new_folder_parent = Some(workspace.root.clone());
+                        self.new_folder_name.clear();
+                    }
+                    ui.close();
                 }
                 self.recent_menu(ui);
                 ui.separator();
