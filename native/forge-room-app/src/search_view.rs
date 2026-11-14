@@ -260,6 +260,13 @@ impl SearchView {
                     if replacement.changed() {
                         self.confirming = false;
                     }
+                    if self.mode.regex {
+                        ui.label(
+                            RichText::new("The replacement is plain text: $1 is not a group.")
+                                .size(12.0)
+                                .color(theme::text_dim()),
+                        );
+                    }
                 });
         }
         if let Some(since) = self.dirty_since
@@ -304,7 +311,13 @@ impl SearchView {
                 seen.dedup();
                 seen.len()
             };
-            let text = if let Some(error) = &results.error {
+            let text = if results.files_cut && results.hits.is_empty() && results.error.is_none() {
+                format!(
+                    "No results in {} files (only the first {} files of this folder are searched)",
+                    results.files_scanned,
+                    search::MAX_LISTED
+                )
+            } else if let Some(error) = &results.error {
                 format!("Invalid pattern: {}", error.lines().next().unwrap_or(""))
             } else if results.hits.is_empty() {
                 format!("No results in {} files", results.files_scanned)

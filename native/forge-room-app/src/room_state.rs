@@ -124,6 +124,7 @@ mod tests {
             acceptance_criteria: Vec::new(),
             completed_criteria: Vec::new(),
             worktree_branch: None,
+            due_at_epoch_seconds: None,
             updated_at_epoch_seconds: 0,
         }
     }
