@@ -108,6 +108,7 @@ pub struct RoomView {
     expanded: Option<String>,
     task_query: String,
     task_status_filter: Option<TaskStatus>,
+    task_priority_filter: Option<TaskPriority>,
     task_owner_filter: Option<String>,
     blocked_tasks_only: bool,
     overdue_tasks_only: bool,
@@ -145,6 +146,7 @@ impl Default for RoomView {
             task_query: String::new(),
             task_owner_filter: None,
             task_status_filter: None,
+            task_priority_filter: None,
             blocked_tasks_only: false,
             overdue_tasks_only: false,
             focus_new_task: false,
@@ -740,6 +742,28 @@ impl RoomView {
             });
             ui.horizontal(|ui| {
                 ui.add_space(14.0);
+                egui::ComboBox::from_id_salt("task-priority-filter")
+                    .selected_text(
+                        self.task_priority_filter
+                            .map_or("All priorities", priority_label),
+                    )
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.task_priority_filter, None, "All priorities");
+                        for priority in [
+                            TaskPriority::Normal,
+                            TaskPriority::High,
+                            TaskPriority::Critical,
+                        ] {
+                            ui.selectable_value(
+                                &mut self.task_priority_filter,
+                                Some(priority),
+                                priority_label(priority),
+                            );
+                        }
+                    });
+            });
+            ui.horizontal(|ui| {
+                ui.add_space(14.0);
                 let selected_owner = self
                     .task_owner_filter
                     .as_ref()
@@ -772,6 +796,7 @@ impl RoomView {
                 ui.add_space(14.0);
                 if (!self.task_query.is_empty()
                     || self.task_status_filter.is_some()
+                    || self.task_priority_filter.is_some()
                     || self.task_owner_filter.is_some()
                     || self.blocked_tasks_only
                     || self.overdue_tasks_only)
@@ -779,6 +804,7 @@ impl RoomView {
                 {
                     self.task_query.clear();
                     self.task_status_filter = None;
+                    self.task_priority_filter = None;
                     self.task_owner_filter = None;
                     self.blocked_tasks_only = false;
                     self.overdue_tasks_only = false;
@@ -806,6 +832,9 @@ impl RoomView {
                         && self
                             .task_status_filter
                             .is_none_or(|selected| selected == status)
+                        && self
+                            .task_priority_filter
+                            .is_none_or(|selected| selected == task.priority)
                         && self
                             .task_owner_filter
                             .as_ref()
