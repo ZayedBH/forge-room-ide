@@ -1,5 +1,7 @@
 # Forge Room — progress and complete working plan
 
+**14 November local task priority:** Local Room tasks now have Normal, High, and Critical priority. The owner or host can change priority on active tasks; task cards and copied summaries show it. Existing saved tasks default to Normal. Integrated core tests, 267 app tests (6 ignored), app Clippy, and formatting passed. This remains local metadata; visible desktop interaction and network scheduling are open.
+
 **14 November integration:** PRs #34–#41 were reviewed and merged in order. Shared `COLLAB.md` and `progress.md` conflicts were resolved by preserving the distinct entries; native Rust source merged without conflicts. The combined tree passed format, 12 core tests, 267 app tests (6 ignored), and warning-free app Clippy. Native desktop visual and keyboard checks remain open where previously noted; concept images remain references, and local Room task state is not network collaboration.
 
 **12 November settings follow-on (PR #35):** Native Settings now exposes persisted Auto Save and editor font-size controls plus Reset Layout. The Models panel links to the installed-CLI AI Agent flow and no longer claims providers are wholly disconnected. Accessibility lists assigned shortcuts from the command registry. Source compile passed; visible Windows interaction remains to be checked. This is a bounded part of I01, not full keybinding customization.

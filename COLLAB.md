@@ -28,7 +28,7 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## Log (newest first)
 
-- 2026-11-14 Codex: Finishing additive local task priority on `feat/local-room-task-priority`: Normal/High/Critical, owner/host updates, badges and copied summaries. Old tasks default to Normal. Source checks and integration with current `main` are in progress; this is local task metadata, not network scheduling.
+- 2026-11-14 Codex: Completed additive local task priority on `feat/local-room-task-priority`: Normal/High/Critical, owner/host updates, badges and copied summaries. Old tasks default to Normal. Integrated core and app tests, format, and warning-free app Clippy passed after reconciling current `main`; visible desktop interaction remains open. This is local task metadata, not network scheduling.
 
 - 2026-11-14 Codex: Reviewed and merged PRs #34–#41 in order. Reconciled their shared notes without dropping entries; the final native source matched the combined tree that passed format, 12 core tests, 267 app tests (6 ignored), and Clippy. `main` has no open PRs or unmerged files. Desktop visual and keyboard acceptance remains separate.
 

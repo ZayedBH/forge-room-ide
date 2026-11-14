@@ -111,7 +111,7 @@ pub fn ago(now: u64, then: u64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use forge_room_core::{Task, TaskStatus};
+    use forge_room_core::{Task, TaskPriority, TaskStatus};
 
     fn task(id: &str) -> Task {
         Task {
@@ -120,6 +120,7 @@ mod tests {
             owner_id: "ada".into(),
             owner_name: "Ada".into(),
             status: TaskStatus::Open,
+            priority: TaskPriority::Normal,
             dependencies: Vec::new(),
             acceptance_criteria: Vec::new(),
             completed_criteria: Vec::new(),
