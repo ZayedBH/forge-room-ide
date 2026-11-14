@@ -1,5 +1,7 @@
 # Forge Room — progress and complete working plan
 
+**14 November integration:** PRs #34–#41 were reviewed and merged in order. Shared `COLLAB.md` and `progress.md` conflicts were resolved by preserving the distinct entries; native Rust source merged without conflicts. The combined tree passed format, 12 core tests, 267 app tests (6 ignored), and warning-free app Clippy. Native desktop visual and keyboard checks remain open where previously noted; concept images remain references, and local Room task state is not network collaboration.
+
 **12 November settings follow-on (PR #35):** Native Settings now exposes persisted Auto Save and editor font-size controls plus Reset Layout. The Models panel links to the installed-CLI AI Agent flow and no longer claims providers are wholly disconnected. Accessibility lists assigned shortcuts from the command registry. Source compile passed; visible Windows interaction remains to be checked. This is a bounded part of I01, not full keybinding customization.
 
 **12 November visual direction:** Native UI concept images are indexed at `docs/design/concept-images/2026-11-12/README.md`, including a newer eight-screen redesign set. These are references, not implemented UI. The user has since directed work back to the remaining native feature roadmap. PR #33 (agent panel, folder trust, terminals) was merged for 0.110.0-alpha.3.
@@ -16,7 +18,7 @@
 
 **12 November Gradle project actions (stacked PR pending):** The native Workflows and Tests panels discover a root Gradle build file and offer explicit build/test buttons. A project wrapper is preferred when present; no command starts during discovery. Three focused project-action tests and Clippy pass. The branch builds on the .NET/CMake action PR and needs that PR before merging.
 
-**Updated:** 12 November 2026. **Active product:** native Rust IDE, Developer Preview `0.110.0-alpha.3`, Windows 11 x64. **Current phase:** Phase 1, visible Windows baseline. **Owners:** @ZayedBH and @Atul013.
+**Updated:** 14 November 2026. **Active product:** native Rust IDE, Developer Preview `0.110.0-alpha.3`, Windows 11 x64. **Current phase:** Phase 1, visible Windows baseline. **Owners:** @ZayedBH and @Atul013.
 
 **9 November local feature slice:** The native left rail now opens Workflows, Models, Run & Debug, Tests, Extensions, Settings, and Accessibility panels. Rust, Node, and Python marker files expose a small set of explicit project commands; pressing a command sends it to the integrated terminal. Debugger adapters, AI model providers, and extension execution remain unavailable and are labelled as such. Source inspection complete; this shell has no `cargo` command, so Rust compilation and desktop acceptance are pending.
 

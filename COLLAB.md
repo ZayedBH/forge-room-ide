@@ -28,6 +28,8 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## Log (newest first)
 
+- 2026-11-14 Codex: Reviewed and merged PRs #34–#41 in order. Reconciled their shared notes without dropping entries; the final native source matched the combined tree that passed format, 12 core tests, 267 app tests (6 ignored), and Clippy. `main` has no open PRs or unmerged files. Desktop visual and keyboard acceptance remains separate.
+
 - 2026-11-14 Codex: Native UI overhaul stacked on compact-rail PR #34 in separate `feat/native-ui-overhaul` worktree. Focused default/reset layout, developer-first rail and Team dock order, contextual Room Pulse, truthful command entry, bounded title/tab labels, and task-first welcome screen. App check, warning-free Clippy, and isolated Windows build passed for the first commit; preview launched, but capture timed out, so visual acceptance remains open. Existing task-priority checkout untouched.
 
 - 2026-11-12 Codex: Added native Settings controls for persisted Auto Save, editor text size and layout reset, an accurate Models-to-AI-Agent action, and registry-backed shortcut help in Accessibility. This is a bounded I01 UI slice in PR #35; source compile passed, desktop interaction pending. `atul/native-rust-ide` still has unmerged fixes; its design-file deletions were not integrated.
