@@ -28,7 +28,7 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## Log (newest first)
 
-- 2026-11-14 Codex: Native UI overhaul stacked on compact-rail PR #34 in separate `feat/native-ui-overhaul` worktree. Focused default/reset layout, contextual Room Pulse, truthful command entry, bounded title/tab labels, and task-first welcome screen. App check, warning-free Clippy, and isolated Windows build passed; preview launched, but capture timed out, so visual acceptance remains open. Existing task-priority checkout untouched.
+- 2026-11-14 Codex: Native UI overhaul stacked on compact-rail PR #34 in separate `feat/native-ui-overhaul` worktree. Focused default/reset layout, developer-first rail and Team dock order, contextual Room Pulse, truthful command entry, bounded title/tab labels, and task-first welcome screen. App check, warning-free Clippy, and isolated Windows build passed for the first commit; preview launched, but capture timed out, so visual acceptance remains open. Existing task-priority checkout untouched.
 
 - 2026-11-12 Codex: Expanded the UI concept library to 32 images, with 20 restrained flat concepts in the active gallery. Added source-grounded design research and a local interactive HTML prototype for menus, tabs, rail views and selectors. This is a visual handoff only; the native Rust app was not changed. Older brighter concepts remain historical and are excluded from the curated gallery.
 

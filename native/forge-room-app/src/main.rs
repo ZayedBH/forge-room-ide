@@ -412,7 +412,7 @@ impl ForgeRoomApp {
             lobby_close_warned: false,
             preview: preview::Preview::default(),
             ai: ai_panel::State::from_settings(&settings::load()),
-            right_tab: RightTab::Ai,
+            right_tab: RightTab::Room,
             terminal_focus_request: false,
             terminal_has_focus: false,
             terminal_error: None,
@@ -2353,8 +2353,6 @@ impl ForgeRoomApp {
         // (item, icon, label, tooltip); `None` is a divider.
         type Entry = Option<(Rail, &'static str, &'static str, &'static str)>;
         let top: [Entry; 13] = [
-            Some((Rail::Ai, "ai", "AI Agent", "AI Agent (Ctrl+Shift+A)")),
-            None,
             Some((
                 Rail::View(SidebarView::Explorer),
                 "code",
@@ -2367,21 +2365,6 @@ impl ForgeRoomApp {
                 "Search",
                 "Search (Ctrl+Shift+F)",
             )),
-            Some((Rail::Room, "room", "Rooms", "Room Lobby")),
-            Some((Rail::Studio, "studio", "Studio", "Studio: themes")),
-            Some((
-                Rail::Project(project_tools::Page::Workflows),
-                "workflows",
-                "Workflows",
-                "Local project workflows",
-            )),
-            Some((
-                Rail::Project(project_tools::Page::Models),
-                "models",
-                "Models",
-                "Project runtimes and provider status",
-            )),
-            None,
             Some((
                 Rail::View(SidebarView::SourceControl),
                 "source-control",
@@ -2400,12 +2383,29 @@ impl ForgeRoomApp {
                 "Tests",
                 "Run project tests",
             )),
+            None,
+            Some((Rail::Room, "room", "Rooms", "Room Lobby")),
+            Some((Rail::Studio, "studio", "Studio", "Studio: themes")),
+            Some((
+                Rail::Project(project_tools::Page::Workflows),
+                "workflows",
+                "Workflows",
+                "Local project workflows",
+            )),
+            Some((
+                Rail::Project(project_tools::Page::Models),
+                "models",
+                "Models",
+                "Project runtimes and provider status",
+            )),
             Some((
                 Rail::Project(project_tools::Page::Extensions),
                 "extensions",
                 "Extensions",
                 "Extension support status",
             )),
+            None,
+            Some((Rail::Ai, "ai", "AI Agent", "AI Agent (Ctrl+Shift+A)")),
         ];
         egui::ScrollArea::vertical()
             .id_salt("activity_tools")
@@ -4249,15 +4249,14 @@ impl ForgeRoomApp {
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 ui.spacing_mut().item_spacing.x = 0.0;
-                                // The AI agent comes first: it is the tab people open most, and the
-                                // last tabs are the ones a narrow dock cuts off.
+                                // Keep everyday Room work visible in narrow docks.
                                 for (tab, label) in [
-                                    (RightTab::Ai, "AI"),
                                     (RightTab::Room, "Team"),
                                     (RightTab::Chat, "Chat"),
-                                    (RightTab::Agents, "Agents"),
                                     (RightTab::Tasks, "Tasks"),
                                     (RightTab::Activity, "Activity"),
+                                    (RightTab::Agents, "Agents"),
+                                    (RightTab::Ai, "AI"),
                                 ] {
                                     if underline_tab_padded(
                                         ui,
