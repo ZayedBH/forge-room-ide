@@ -1,5 +1,7 @@
 # Forge Room — progress and complete working plan
 
+**14 November title menu follow-on:** Clicking a background panel or blank title area now dismisses the brand menu stack, including open File/Edit/View submenus. File also offers New Folder when a workspace is open, using the existing folder-name dialog and validation. Local app tests (267 passed, 6 ignored), build, format, and Clippy passed; visible desktop click acceptance remains open.
+
 **14 November local task priority:** Local Room tasks now have Normal, High, and Critical priority. The owner or host can change priority on active tasks; task cards, copied summaries, and a list filter expose it. Existing saved tasks default to Normal. Integrated core tests, 267 app tests (6 ignored), app Clippy, and formatting passed. A later full test run hit an existing search cancellation timing test once; its targeted rerun passed. This remains local metadata; visible desktop interaction and network scheduling are open.
 
 **14 November integration:** PRs #34–#41 were reviewed and merged in order. Shared `COLLAB.md` and `progress.md` conflicts were resolved by preserving the distinct entries; native Rust source merged without conflicts. The combined tree passed format, 12 core tests, 267 app tests (6 ignored), and warning-free app Clippy. Native desktop visual and keyboard checks remain open where previously noted; concept images remain references, and local Room task state is not network collaboration.
