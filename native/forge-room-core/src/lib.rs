@@ -71,6 +71,15 @@ impl FromStr for TaskStatus {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum TaskPriority {
+    #[default]
+    Normal,
+    High,
+    Critical,
+}
+
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Task {
@@ -79,6 +88,8 @@ pub struct Task {
     pub owner_id: String,
     pub owner_name: String,
     pub status: TaskStatus,
+    #[serde(default)]
+    pub priority: TaskPriority,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub dependencies: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -176,6 +187,7 @@ pub enum DomainError {
     AcceptanceCriteriaTooLarge,
     CompletedTaskHandoff,
     CompletedTaskDueChange,
+    CompletedTaskPriorityChange,
     DependencyBlocked(Vec<String>),
     DuplicateParticipant,
     DuplicateTask,
@@ -222,6 +234,10 @@ impl fmt::Display for DomainError {
                     "completed tasks must be reopened before changing the due time"
                 )
             }
+            Self::CompletedTaskPriorityChange => write!(
+                formatter,
+                "completed tasks must be reopened before changing priority"
+            ),
             Self::DependencyBlocked(ids) => write!(
                 formatter,
                 "unfinished dependencies block this transition: {}",
@@ -501,6 +517,24 @@ impl RoomState {
         Ok(())
     }
 
+    pub fn set_task_priority(
+        &mut self,
+        actor_id: &str,
+        task_id: &str,
+        priority: TaskPriority,
+    ) -> Result<(), DomainError> {
+        self.require_connected(actor_id)?;
+        let index = self.task_index(task_id)?;
+        self.require_task_writer(actor_id, &self.tasks[index])?;
+        if self.tasks[index].status == TaskStatus::Done {
+            return Err(DomainError::CompletedTaskPriorityChange);
+        }
+        self.tasks[index].priority = priority;
+        self.tasks[index].updated_at_epoch_seconds = now_epoch_seconds();
+        self.record_activity(actor_id, format!("changed priority for task {task_id}"));
+        Ok(())
+    }
+
     pub fn request_handoff(
         &mut self,
         actor_id: &str,
@@ -737,6 +771,7 @@ mod tests {
             owner_id: owner.into(),
             owner_name: owner.into(),
             status: TaskStatus::Open,
+            priority: TaskPriority::Normal,
             dependencies,
             acceptance_criteria: vec!["tests pass".into()],
             completed_criteria: Vec::new(),
@@ -749,10 +784,34 @@ mod tests {
     #[test]
     fn old_tasks_load_without_a_due_time() {
         let original = task("old", "alice", Vec::new());
-        let value = serde_json::to_value(&original).unwrap();
+        let mut value = serde_json::to_value(&original).unwrap();
         assert!(value.get("dueAtEpochSeconds").is_none());
+        value.as_object_mut().unwrap().remove("priority");
         let loaded: Task = serde_json::from_value(value).unwrap();
         assert_eq!(loaded.due_at_epoch_seconds, None);
+        assert_eq!(loaded.priority, TaskPriority::Normal);
+    }
+
+    #[test]
+    fn only_owner_or_host_changes_active_task_priority() {
+        let mut room = room();
+        room.create_task("host", task("priority", "alice", vec![]))
+            .unwrap();
+        assert_eq!(
+            room.set_task_priority("bob", "priority", TaskPriority::High),
+            Err(DomainError::OnlyOwnerOrHostCanUpdate)
+        );
+        room.set_task_priority("alice", "priority", TaskPriority::High)
+            .unwrap();
+        assert_eq!(room.tasks[0].priority, TaskPriority::High);
+        room.set_task_priority("host", "priority", TaskPriority::Critical)
+            .unwrap();
+        assert_eq!(room.tasks[0].priority, TaskPriority::Critical);
+        room.tasks[0].status = TaskStatus::Done;
+        assert_eq!(
+            room.set_task_priority("host", "priority", TaskPriority::Normal),
+            Err(DomainError::CompletedTaskPriorityChange)
+        );
     }
 
     fn room() -> RoomState {
