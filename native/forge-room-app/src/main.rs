@@ -53,7 +53,7 @@ use workspace::Workspace;
 const APP_NAME: &str = "Forge Room Early Preview";
 const TAB_HEIGHT: f32 = 42.0;
 const TITLE_HEIGHT: f32 = 36.0;
-const ACTIVITY_WIDTH: f32 = 112.0;
+const ACTIVITY_WIDTH: f32 = 56.0;
 
 /// One entry of the navigation rail on the left.
 #[derive(Clone, Copy)]
@@ -2416,33 +2416,39 @@ impl ForgeRoomApp {
                 "Extension support status",
             )),
         ];
-        for entry in top {
-            match entry {
-                None => {
-                    ui.add_space(4.0);
-                    let (rect, _) = ui.allocate_exact_size(
-                        egui::vec2(ui.available_width(), 1.0),
-                        egui::Sense::hover(),
-                    );
-                    ui.painter().line_segment(
-                        [
-                            rect.left_center() + egui::vec2(12.0, 0.0),
-                            rect.right_center() - egui::vec2(12.0, 0.0),
-                        ],
-                        egui::Stroke::new(1.0, theme::border()),
-                    );
-                    ui.add_space(4.0);
+        egui::ScrollArea::vertical()
+            .id_salt("activity_tools")
+            .auto_shrink([false, false])
+            .max_height((ui.available_height() - 100.0).max(100.0))
+            .show(ui, |ui| {
+                for entry in top {
+                    match entry {
+                        None => {
+                            ui.add_space(4.0);
+                            let (rect, _) = ui.allocate_exact_size(
+                                egui::vec2(ui.available_width(), 1.0),
+                                egui::Sense::hover(),
+                            );
+                            ui.painter().line_segment(
+                                [
+                                    rect.left_center() + egui::vec2(12.0, 0.0),
+                                    rect.right_center() - egui::vec2(12.0, 0.0),
+                                ],
+                                egui::Stroke::new(1.0, theme::border()),
+                            );
+                            ui.add_space(4.0);
+                        }
+                        Some((item, icon, label, tip)) => {
+                            let count = match item {
+                                Rail::View(SidebarView::SourceControl) => badge,
+                                Rail::Room => rooms,
+                                _ => 0,
+                            };
+                            self.rail_item(ui, item, icon, label, tip, count);
+                        }
+                    }
                 }
-                Some((item, icon, label, tip)) => {
-                    let count = match item {
-                        Rail::View(SidebarView::SourceControl) => badge,
-                        Rail::Room => rooms,
-                        _ => 0,
-                    };
-                    self.rail_item(ui, item, icon, label, tip, count);
-                }
-            }
-        }
+            });
         ui.add_space(4.0);
         self.rail_item(
             ui,
@@ -2456,27 +2462,14 @@ impl ForgeRoomApp {
         ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
             ui.spacing_mut().item_spacing = egui::vec2(0.0, 4.0);
             ui.add_space(10.0);
-            ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = 14.0;
-                ui.add_space(14.0);
-                for (icon, tip, enabled) in [
-                    ("cloud", "Cloud: coming soon", false),
-                    ("settings", "Settings", true),
-                ] {
-                    let (rect, response) = ui.allocate_exact_size(
-                        egui::vec2(30.0, 30.0),
-                        if enabled {
-                            egui::Sense::click()
-                        } else {
-                            egui::Sense::hover()
-                        },
-                    );
-                    icons::draw(ui.painter(), icon, rect.center(), 20.0, theme::text_dim());
-                    if response.on_hover_text(tip).clicked() {
-                        self.switch_view(SidebarView::Project(project_tools::Page::Settings));
-                    }
-                }
-            });
+            self.rail_item(
+                ui,
+                Rail::Project(project_tools::Page::Settings),
+                "settings",
+                "",
+                "Settings",
+                0,
+            );
             self.rail_item(
                 ui,
                 Rail::Project(project_tools::Page::Accessibility),
@@ -2493,21 +2486,19 @@ impl ForgeRoomApp {
         ui: &mut egui::Ui,
         item: Rail,
         icon: &str,
-        label: &str,
+        _label: &str,
         tip: &str,
         count: usize,
     ) {
-        let soon = false;
-        let height = if label.contains('\n') { 46.0 } else { 35.0 };
-        let (rect, response) = ui.allocate_exact_size(
-            egui::vec2(ACTIVITY_WIDTH - 12.0, height),
-            if soon {
-                egui::Sense::hover()
-            } else {
-                egui::Sense::click()
-            },
-        );
-        let rect = rect.translate(egui::vec2(6.0, 0.0));
+        let height = 40.0;
+        let response = ui
+            .add_sized(
+                egui::vec2(ACTIVITY_WIDTH - 8.0, height),
+                egui::Button::new("").frame(false),
+            )
+            .accessible_name(tip)
+            .on_hover_text(tip);
+        let rect = response.rect.translate(egui::vec2(4.0, 0.0));
         let active = match item {
             Rail::View(view) => !self.show_lobby && self.show_sidebar && self.view == view,
             Rail::Terminal => !self.show_lobby && self.show_terminal,
@@ -2518,16 +2509,22 @@ impl ForgeRoomApp {
             }
             Rail::Studio => false,
         };
-        let hovered = response.hovered() && !soon;
+        let hovered = response.hovered();
         let painter = ui.painter();
         if active {
             painter.rect_filled(rect, 5.0, theme::nav_active());
         } else if hovered {
             painter.rect_filled(rect, 8.0, theme::overlay(12));
         }
-        let color = if soon {
-            theme::mix(theme::bg_activity(), theme::text_dim(), 0.6)
-        } else if active || hovered {
+        if response.has_focus() {
+            painter.rect_stroke(
+                rect,
+                5.0,
+                egui::Stroke::new(2.0, theme::accent()),
+                egui::StrokeKind::Inside,
+            );
+        }
+        let color = if active || hovered {
             theme::text()
         } else {
             theme::text_dim()
@@ -2537,24 +2534,9 @@ impl ForgeRoomApp {
         } else {
             icon
         };
-        icons::draw(
-            painter,
-            icon_name,
-            egui::pos2(rect.left() + 19.0, rect.center().y),
-            19.0,
-            color,
-        );
-        if !label.is_empty() {
-            painter.text(
-                egui::pos2(rect.left() + 35.0, rect.center().y),
-                egui::Align2::LEFT_CENTER,
-                label,
-                egui::FontId::proportional(if label.len() > 10 { 11.0 } else { 12.0 }),
-                color,
-            );
-        }
+        icons::draw(painter, icon_name, rect.center(), 19.0, color);
         if count > 0 {
-            let center = egui::pos2(rect.right() - 12.0, rect.center().y);
+            let center = egui::pos2(rect.right() - 8.0, rect.top() + 9.0);
             painter.circle_filled(center, 7.0, theme::badge());
             painter.text(
                 center,
@@ -2564,7 +2546,7 @@ impl ForgeRoomApp {
                 theme::badge_text(),
             );
         }
-        if response.on_hover_text(tip).clicked() {
+        if response.clicked() {
             match item {
                 Rail::View(view) => {
                     let showing = self.show_sidebar && self.view == view && !self.show_lobby;
@@ -3206,7 +3188,14 @@ impl ForgeRoomApp {
             SidebarView::SourceControl => self.source_control_view(ui, false),
             SidebarView::Project(page) => {
                 let root = self.repo_root();
-                match project_tools::show(ui, page, root.as_deref(), &self.runtimes) {
+                match project_tools::show(
+                    ui,
+                    page,
+                    root.as_deref(),
+                    &self.runtimes,
+                    self.auto_save,
+                    self.editor_scale,
+                ) {
                     Some(project_tools::Selected::Command(_)) if !self.trusted => {
                         self.status = "Trust this folder first (Folder: Trust This Folder): project commands run its build scripts".into();
                     }
@@ -3227,6 +3216,9 @@ impl ForgeRoomApp {
                         }
                     }
                     Some(project_tools::Selected::Studio) => self.gallery.open(),
+                    Some(project_tools::Selected::AppCommand(command)) => {
+                        self.run_command(command, false);
+                    }
                     Some(project_tools::Selected::ToggleTerminal) => {
                         self.show_terminal = !self.show_terminal;
                     }
