@@ -32,6 +32,8 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 - 2026-11-12 Codex: Cherry-picked five post-alpha.3 Atul native app tester-fix commits onto `integrate/atul-alpha3-fixes` without the upstream branch's design-asset deletions. Scope is agent, file/recovery safety, search, session and terminal source; local format, 263 tests and Clippy passed. PR review is pending. No PR merge or branch deletion.
 
+- 2026-11-12 Codex: Added explicit .NET and CMake project command discovery in `feat/dotnet-project-actions` (PR #37). One safe-named solution is preferred over sibling projects; ambiguous .NET roots are skipped. CMake exposes Configure, Build and CTest according to generated files. Focused tests passed; real projects and desktop trial pending. This is a daily IDE workflow slice, not debugger or language-server support.
+
 - 2026-11-12 Codex: Expanded the UI concept library to 32 images, with 20 restrained flat concepts in the active gallery. Added source-grounded design research and a local interactive HTML prototype for menus, tabs, rail views and selectors. This is a visual handoff only; the native Rust app was not changed. Older brighter concepts remain historical and are excluded from the curated gallery.
 
 - 2026-11-12 Codex: Generated twelve native Forge Room UI concept images in `docs/design/concept-images/2026-11-12/` covering the workspace, lobby, chat, tasks, Git, run/tests/debug, Studio, Ship Mode, first run, activity, extensions, and Pocket. User redirected current effort away from in-app AI work; the open upstream AI-heavy PR was not integrated. Concepts are visual references, not runtime claims.
