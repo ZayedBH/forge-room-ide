@@ -14,6 +14,8 @@
 
 **12 November keyboard follow-on (PR pending):** A newly opened folder trust question now requests keyboard focus on the safer "Browse without Git and tools" choice once. Local build, formatting and Clippy pass. The Windows UI Automation trial exposed only the top-level window for this build, so focused desktop acceptance remains open.
 
+**12 November Gradle project actions (stacked PR pending):** The native Workflows and Tests panels discover a root Gradle build file and offer explicit build/test buttons. A project wrapper is preferred when present; no command starts during discovery. Three focused project-action tests and Clippy pass. The branch builds on the .NET/CMake action PR and needs that PR before merging.
+
 **Updated:** 12 November 2026. **Active product:** native Rust IDE, Developer Preview `0.110.0-alpha.3`, Windows 11 x64. **Current phase:** Phase 1, visible Windows baseline. **Owners:** @ZayedBH and @Atul013.
 
 **9 November local feature slice:** The native left rail now opens Workflows, Models, Run & Debug, Tests, Extensions, Settings, and Accessibility panels. Rust, Node, and Python marker files expose a small set of explicit project commands; pressing a command sends it to the integrated terminal. Debugger adapters, AI model providers, and extension execution remain unavailable and are labelled as such. Source inspection complete; this shell has no `cargo` command, so Rust compilation and desktop acceptance are pending.
