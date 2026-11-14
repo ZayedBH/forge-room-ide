@@ -28,8 +28,10 @@ pub struct Session {
     pub layout: Option<Layout>,
 }
 
-/// The shape of the window: panels shown, the bottom tab, and panel sizes in points.
+/// The shape of the window: panels shown, the bottom tab, and panel sizes in points. A missing field
+/// takes its default, so a layout from another build never loses the rest of the session.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(default)]
 pub struct Layout {
     pub sidebar: bool,
     pub right: bool,
@@ -42,6 +44,21 @@ pub struct Layout {
     pub terminal_height: u16,
 }
 
+impl Default for Layout {
+    fn default() -> Self {
+        Layout {
+            sidebar: true,
+            right: true,
+            terminal: true,
+            preview: true,
+            bottom_tab: 0,
+            sidebar_width: 250,
+            right_width: 364,
+            terminal_height: 200,
+        }
+    }
+}
+
 /// At most this many terminals are reopened.
 pub const MAX_TERMINALS: usize = 6;
 
@@ -52,8 +69,13 @@ impl Session {
         let folder = self.folder.filter(|folder| Path::new(folder).is_dir());
         let active_file = self.active.and_then(|index| self.files.get(index).cloned());
         let mut files: Vec<String> = Vec::new();
+        // The same file spelled with another case or slash is the same file.
+        let key = |path: &str| path.replace('/', "\\").to_lowercase();
         for file in self.files {
-            if files.len() < MAX_FILES && Path::new(&file).is_file() && !files.contains(&file) {
+            if files.len() < MAX_FILES
+                && Path::new(&file).is_file()
+                && !files.iter().any(|known| key(known) == key(&file))
+            {
                 files.push(file);
             }
         }
@@ -85,7 +107,8 @@ pub fn default_path() -> PathBuf {
 pub fn load_from(path: &Path) -> Session {
     fs::read_to_string(path)
         .ok()
-        .and_then(|text| serde_json::from_str(&text).ok())
+        // A byte order mark (an old Notepad) in front of the text is not part of it.
+        .and_then(|text| serde_json::from_str(text.trim_start_matches('\u{feff}')).ok())
         .unwrap_or_default()
 }
 
@@ -93,13 +116,14 @@ pub fn save_to(path: &Path, session: &Session) -> io::Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    // Beside the target and renamed over it, so a crash never leaves half a file.
-    let temporary = path.with_extension("json.tmp");
-    fs::write(
-        &temporary,
-        serde_json::to_string_pretty(session).map_err(io::Error::other)?,
-    )?;
-    fs::rename(temporary, path)
+    // Beside the target and renamed over it (a name nobody planted), so a crash never leaves half a
+    // file and a link at a guessable name is never written through.
+    crate::document::write_atomic(
+        path,
+        serde_json::to_string_pretty(session)
+            .map_err(io::Error::other)?
+            .as_bytes(),
+    )
 }
 
 #[cfg(test)]
@@ -159,6 +183,48 @@ mod tests {
         assert_eq!(load_from(&file), Session::default());
         fs::write(&file, "{}").unwrap();
         assert_eq!(load_from(&file), Session::default());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_planted_temporary_file_cannot_redirect_the_session_save() {
+        let dir = std::env::temp_dir().join(format!("forge-session-plant-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let outside = dir.join("outside.txt");
+        fs::write(&outside, "outside original\n").unwrap();
+        let file = dir.join("session.json");
+        let _ = fs::hard_link(&outside, dir.join("session.json.tmp"));
+        save_to(&file, &Session::default()).unwrap();
+        assert_eq!(fs::read_to_string(&outside).unwrap(), "outside original\n");
+        assert_eq!(load_from(&file), Session::default());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_layout_with_missing_fields_or_a_byte_order_mark_keeps_the_rest_of_the_session() {
+        let dir =
+            std::env::temp_dir().join(format!("forge-session-lenient-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let kept = dir.join("kept.txt");
+        fs::write(&kept, "x").unwrap();
+        let file = dir.join("session.json");
+        let text = format!(
+            "\u{feff}{{\"files\":[{:?}],\"layout\":{{\"sidebar\":false}}}}",
+            kept.display().to_string()
+        );
+        fs::write(&file, text).unwrap();
+        let loaded = load_from(&file);
+        assert_eq!(loaded.files.len(), 1, "{loaded:?}");
+        assert_eq!(loaded.layout.map(|layout| layout.sidebar), Some(false));
+        // The same file spelled with another case is not a second tab.
+        let twice = Session {
+            files: vec![
+                kept.display().to_string(),
+                kept.display().to_string().to_uppercase(),
+            ],
+            ..Session::default()
+        };
+        assert_eq!(twice.clean().files.len(), 1);
         fs::remove_dir_all(dir).unwrap();
     }
 }
