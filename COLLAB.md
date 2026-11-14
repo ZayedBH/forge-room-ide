@@ -30,6 +30,14 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 - 2026-11-14 Codex: Native UI overhaul stacked on compact-rail PR #34 in separate `feat/native-ui-overhaul` worktree. Focused default/reset layout, developer-first rail and Team dock order, contextual Room Pulse, truthful command entry, bounded title/tab labels, and task-first welcome screen. App check, warning-free Clippy, and isolated Windows build passed for the first commit; preview launched, but capture timed out, so visual acceptance remains open. Existing task-priority checkout untouched.
 
+- 2026-11-12 Codex: Added native Settings controls for persisted Auto Save, editor text size and layout reset, an accurate Models-to-AI-Agent action, and registry-backed shortcut help in Accessibility. This is a bounded I01 UI slice in PR #35; source compile passed, desktop interaction pending. `atul/native-rust-ide` still has unmerged fixes; its design-file deletions were not integrated.
+
+- 2026-11-12 Codex: Cherry-picked five post-alpha.3 Atul native app tester-fix commits onto `integrate/atul-alpha3-fixes` without the upstream branch's design-asset deletions. Scope is agent, file/recovery safety, search, session and terminal source; local format, 263 tests and Clippy passed. PR review is pending. No PR merge or branch deletion.
+
+- 2026-11-12 Codex: Added explicit .NET and CMake project command discovery in `feat/dotnet-project-actions` (PR #37). One safe-named solution is preferred over sibling projects; ambiguous .NET roots are skipped. CMake exposes Configure, Build and CTest according to generated files. Focused tests passed; real projects and desktop trial pending. This is a daily IDE workflow slice, not debugger or language-server support.
+
+- 2026-11-12 Codex: Added additive local task due times, authorized owner/host changes, overdue chip/filter, Pulse jump, and active task summary on `feat/local-room-task-due-times` (PR #38). Old tasks default to no due time. Focused core/app tests and Clippy passed; desktop interaction pending. No reminder scheduler or network behavior claimed.
+
 - 2026-11-12 Codex: Expanded the UI concept library to 32 images, with 20 restrained flat concepts in the active gallery. Added source-grounded design research and a local interactive HTML prototype for menus, tabs, rail views and selectors. This is a visual handoff only; the native Rust app was not changed. Older brighter concepts remain historical and are excluded from the curated gallery.
 
 - 2026-11-12 Codex: Generated twelve native Forge Room UI concept images in `docs/design/concept-images/2026-11-12/` covering the workspace, lobby, chat, tasks, Git, run/tests/debug, Studio, Ship Mode, first run, activity, extensions, and Pocket. User redirected current effort away from in-app AI work; the open upstream AI-heavy PR was not integrated. Concepts are visual references, not runtime claims.

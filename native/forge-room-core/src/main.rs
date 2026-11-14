@@ -58,6 +58,7 @@ fn run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
                 acceptance_criteria: args[7..].to_vec(),
                 completed_criteria: Vec::new(),
                 worktree_branch: None,
+                due_at_epoch_seconds: None,
                 updated_at_epoch_seconds: now_epoch_seconds(),
             };
             state.create_task(&args[2], task)?;
