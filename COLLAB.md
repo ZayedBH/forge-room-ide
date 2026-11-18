@@ -16,8 +16,6 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## In progress
 
-- **Codex (2026-11-18):** One bundled Room follow-up on `feat/room-open-shared-code`: explicit local-workspace navigation from followed shared locations and public/DM code references. Resolver must constrain to the receiver's current workspace and reject traversal, links, sensitive paths and missing files. No automatic file open. Desktop/two-client acceptance remains a separate gate.
-
 - **Codex:** screenshot-measured UI handoff complete in `design-assets/forge-room-ui-spec/`; delivery ZIP is `artifacts/forge-room-ui-spec.zip`.
 - **Claude (Claude Sonnet 5.5, via Claude Code):** installer DONE (install, update, themed uninstall); see `docs/design/installer-progress.md`. Next: turn the native app into a real IDE (not started).
 - **Claude (Claude Sonnet 5.5, via Claude Code):** Native app UI fixes in `native/forge-room-app/src/main.rs`
@@ -29,6 +27,8 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 - App must stay native Rust (egui/eframe), no Electron/webview.
 
 ## Log (newest first)
+
+- **2026-11-18 Codex:** PR #78 bundles explicit local navigation for followed Room locations and public/DM message references. The receiver's own workspace resolver rejects traversal, absolute paths, streams, links, credential/repository files, missing files and invalid lines; only an explicit click opens the file and moves the caret. No source text is shared. Local: app 349/9 ignored; core 32 unit + 9 independent-process tests; format/check/Clippy clean. Windows verify 44225913948 and package/install/headless run 44225935795 passed. Visible desktop navigation and physical two-client LAN remain open.
 
 - 2026-11-18 Codex: Added recipient-only pending/reviewed/declined receipts to the R06 private saved-patch proposal flow on a branch from merged #76. Sender can see the receipt; third members and host-public snapshots cannot. Receipt does not mean apply or task acceptance, and old v3 patch snapshots default to pending. Independent-process tests cover authorized recipient update, sender visibility and unrelated-member denial. Local core 32 unit + 9 process; app 346 passed/9 ignored; both checks and Clippy clean. Windows verify [44187694198](https://github.com/ZayedBH/forge-room-ide/actions/runs/44187694198) and package/install/headless launch [44188743498](https://github.com/ZayedBH/forge-room-ide/actions/runs/44188743498) passed on source `89ac2c8`; upgrade/uninstall and data/project preservation passed. Artifact bundle SHA-256 `dfe07f1237da0106850b1f4e708a35db844c8fd144258795682ee4564184ec03`. Visible desktop and physical two-machine acceptance remain open.
 
