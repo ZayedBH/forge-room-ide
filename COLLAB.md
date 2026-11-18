@@ -16,6 +16,8 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## In progress
 
+- **Codex (2026-11-18):** One bundled Room follow-up on `feat/room-open-shared-code`: explicit local-workspace navigation from followed shared locations and public/DM code references. Resolver must constrain to the receiver's current workspace and reject traversal, links, sensitive paths and missing files. No automatic file open. Desktop/two-client acceptance remains a separate gate.
+
 - **Codex:** screenshot-measured UI handoff complete in `design-assets/forge-room-ui-spec/`; delivery ZIP is `artifacts/forge-room-ui-spec.zip`.
 - **Claude (Claude Sonnet 5.5, via Claude Code):** installer DONE (install, update, themed uninstall); see `docs/design/installer-progress.md`. Next: turn the native app into a real IDE (not started).
 - **Claude (Claude Sonnet 5.5, via Claude Code):** Native app UI fixes in `native/forge-room-app/src/main.rs`
