@@ -16,6 +16,8 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## In progress
 
+- **Codex (2026-11-18):** One terminal UX bundle on `feat/native-terminal-shell-profiles`: discover available platform shells, select a shell for a new terminal, remember the default choice, and preserve each session's shell on restart. Keep project cwd and existing terminal sessions/splits intact.
+
 - **Codex:** screenshot-measured UI handoff complete in `design-assets/forge-room-ui-spec/`; delivery ZIP is `artifacts/forge-room-ui-spec.zip`.
 - **Claude (Claude Sonnet 5.5, via Claude Code):** installer DONE (install, update, themed uninstall); see `docs/design/installer-progress.md`. Next: turn the native app into a real IDE (not started).
 - **Claude (Claude Sonnet 5.5, via Claude Code):** Native app UI fixes in `native/forge-room-app/src/main.rs`
