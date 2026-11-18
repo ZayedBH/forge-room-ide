@@ -16,8 +16,6 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 
 ## In progress
 
-- **Codex (2026-11-18):** One terminal UX bundle on `feat/native-terminal-shell-profiles`: discover available platform shells, select a shell for a new terminal, remember the default choice, and preserve each session's shell on restart. Keep project cwd and existing terminal sessions/splits intact.
-
 - **Codex:** screenshot-measured UI handoff complete in `design-assets/forge-room-ui-spec/`; delivery ZIP is `artifacts/forge-room-ui-spec.zip`.
 - **Claude (Claude Sonnet 5.5, via Claude Code):** installer DONE (install, update, themed uninstall); see `docs/design/installer-progress.md`. Next: turn the native app into a real IDE (not started).
 - **Claude (Claude Sonnet 5.5, via Claude Code):** Native app UI fixes in `native/forge-room-app/src/main.rs`
@@ -29,6 +27,8 @@ Keep entries short. Newest entry first in "Log". Never delete the other agent's 
 - App must stay native Rust (egui/eframe), no Electron/webview.
 
 ## Log (newest first)
+
+- **2026-11-18 Codex:** PR #79 adds cached platform shell discovery, explicit profile selection for new terminals, a saved default and same-session profile on restart. Project cwd and existing terminal tabs/splits remain. Local app 351 passed/9 ignored; fmt/check/Clippy clean. Windows CI [44234286435](https://github.com/ZayedBH/forge-room-ide/actions/runs/44234286435) and package/install/headless [44234300163](https://github.com/ZayedBH/forge-room-ide/actions/runs/44234300163) passed. Interactive shell selection and visible desktop acceptance remain open.
 
 - **2026-11-18 Codex:** PR #78 bundles explicit local navigation for followed Room locations and public/DM message references. The receiver's own workspace resolver rejects traversal, absolute paths, streams, links, credential/repository files, missing files and invalid lines; only an explicit click opens the file and moves the caret. No source text is shared. Local: app 349/9 ignored; core 32 unit + 9 independent-process tests; format/check/Clippy clean. Windows verify 44225913948 and package/install/headless run 44225935795 passed. Visible desktop navigation and physical two-client LAN remain open.
 
