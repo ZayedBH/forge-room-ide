@@ -61,6 +61,7 @@ pub enum Command {
     GitFetch,
     GitStash,
     GitStashApply,
+    GitCommit,
     GitStageFile,
     GitUnstageFile,
     GitDiscardFile,
@@ -252,6 +253,7 @@ pub const ALL: &[(Command, &str, &str)] = &[
     (Command::GitFetch, "Git: Fetch", ""),
     (Command::GitStash, "Git: Stash Changes", ""),
     (Command::GitStashApply, "Git: Apply Latest Stash", ""),
+    (Command::GitCommit, "Git: Commit… (write the message)", ""),
     (Command::GitStageFile, "Git: Stage Open File", ""),
     (Command::GitUnstageFile, "Git: Unstage Open File", ""),
     (
