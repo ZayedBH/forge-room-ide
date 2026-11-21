@@ -1203,7 +1203,12 @@ impl ForgeRoomApp {
         // A Git command in a folder where Git is off would do nothing and say nothing.
         if matches!(
             command,
-            Command::SwitchBranch
+            Command::GitStageFile
+                | Command::GitUnstageFile
+                | Command::GitDiscardFile
+                | Command::GitAcceptCurrent
+                | Command::GitAcceptIncoming
+                | Command::SwitchBranch
                 | Command::MergeBranch
                 | Command::DeleteBranch
                 | Command::CreateTag
@@ -1482,6 +1487,11 @@ impl ForgeRoomApp {
             Command::GitFetch => self.git_action(source_control::Action::Fetch),
             Command::GitStash => self.git_action(source_control::Action::Stash),
             Command::GitStashApply => self.git_action(source_control::Action::StashApply),
+            Command::GitStageFile
+            | Command::GitUnstageFile
+            | Command::GitDiscardFile
+            | Command::GitAcceptCurrent
+            | Command::GitAcceptIncoming => self.git_open_file_command(command),
             Command::Find => self.find.show_bar(false),
             Command::Replace => self.find.show_bar(true),
             Command::QuickOpen => {
@@ -3593,6 +3603,67 @@ impl ForgeRoomApp {
         }
         if self.git_refresh.take_again() {
             self.refresh_git();
+        }
+    }
+
+    /// Stage, unstage, discard or resolve the conflict of the file open in the editor: the same
+    /// actions as the Source Control buttons, reachable from the palette (and so by keyboard).
+    fn git_open_file_command(&mut self, command: Command) {
+        let (Some(root), Some(tab)) = (self.git_root(), self.tabs.tabs.get(self.tabs.active))
+        else {
+            self.status = "Open a file in a Git folder first".into();
+            return;
+        };
+        let Some(path) = tab.doc.path() else {
+            self.status = "This tab is not a file on disk".into();
+            return;
+        };
+        let Ok(relative) = path.strip_prefix(&root) else {
+            self.status = "This file is outside the Git folder".into();
+            return;
+        };
+        let relative = relative.to_string_lossy().replace('\\', "/");
+        let dirty = tab.doc.is_dirty();
+        let change = match &self.git_status {
+            Some(Ok(status)) => status
+                .changes
+                .iter()
+                .find(|change| change.path == relative)
+                .cloned(),
+            _ => {
+                self.status = "Git status is not available yet: try again in a moment".into();
+                self.refresh_git();
+                return;
+            }
+        };
+        let Some(change) = change else {
+            // The cached status may be a moment behind a save or an outside edit.
+            self.refresh_git();
+            self.status = format!("{relative} has no changes");
+            return;
+        };
+        match decide_file_command(command, &change, dirty) {
+            FileGitDecision::Say(text) => self.status = text,
+            FileGitDecision::Stage => {
+                self.git_action(source_control::Action::Stage(vec![relative]));
+            }
+            FileGitDecision::Unstage => {
+                self.git_action(source_control::Action::Unstage(vec![relative]));
+            }
+            // The same question as the button: this one cannot be undone.
+            FileGitDecision::Discard => self.pending_discard = Some(vec![change]),
+            FileGitDecision::Resolve(side) => {
+                let absolute = root.join(&relative);
+                self.git_action(source_control::Action::Resolve {
+                    path: relative,
+                    side,
+                });
+                self.reload_clean_tabs();
+                // Taking the side that deleted the file removes it: its tab would show stale text.
+                if !absolute.exists() {
+                    self.tabs.close(self.tabs.active);
+                }
+            }
         }
     }
 
@@ -7367,6 +7438,50 @@ fn dialog_buttons(
     .inner
 }
 
+/// What a palette Git command on the open file should do for its change.
+#[derive(Debug, PartialEq)]
+enum FileGitDecision {
+    Stage,
+    Unstage,
+    Discard,
+    Resolve(git::Side),
+    /// Nothing to do: the message says why.
+    Say(String),
+}
+
+/// The decision for one command on one changed file (pure, so each combination is tested). A file
+/// in conflict can only be resolved: staging it would mark it done, and unstaging it would quietly
+/// drop the conflict while its markers are still in the text.
+fn decide_file_command(command: Command, change: &git::Change, dirty: bool) -> FileGitDecision {
+    use FileGitDecision::{Discard, Resolve, Say, Stage, Unstage};
+    let path = &change.path;
+    let conflict = change.is_conflict();
+    match command {
+        Command::GitStageFile if change.is_staged() && !change.is_unstaged() && !conflict => {
+            Say(format!("{path} is already staged"))
+        }
+        Command::GitStageFile => Stage,
+        Command::GitUnstageFile if conflict => Say(format!(
+            "{path} is in conflict: resolve it instead (Keep Current or Keep Incoming)"
+        )),
+        Command::GitUnstageFile if !change.is_staged() => Say(format!("{path} is not staged")),
+        Command::GitUnstageFile => Unstage,
+        Command::GitDiscardFile if conflict || !change.is_unstaged() => {
+            Say(format!("{path} has no unstaged changes to discard"))
+        }
+        Command::GitDiscardFile => Discard,
+        Command::GitAcceptCurrent | Command::GitAcceptIncoming if !conflict => {
+            Say(format!("{path} is not in conflict"))
+        }
+        Command::GitAcceptCurrent | Command::GitAcceptIncoming if dirty => {
+            Say("Save the file first: resolving replaces its text".into())
+        }
+        Command::GitAcceptCurrent => Resolve(git::Side::Current),
+        Command::GitAcceptIncoming => Resolve(git::Side::Incoming),
+        _ => Say(String::new()),
+    }
+}
+
 /// Whether a status message reports a failure (it is then shown in red and held for a while).
 fn is_error_status(text: &str) -> bool {
     [
@@ -7477,7 +7592,109 @@ fn underline_tab_padded(
 
 #[cfg(test)]
 mod status_tests {
-    use super::{is_background_status, is_error_status};
+    use super::{
+        Command, FileGitDecision, decide_file_command, is_background_status, is_error_status,
+    };
+    use crate::git::{Change, Side};
+
+    fn change(index: char, worktree: char) -> Change {
+        Change {
+            path: "src/a.rs".into(),
+            index,
+            worktree,
+        }
+    }
+
+    #[test]
+    fn open_file_git_commands_decide_by_the_files_state() {
+        use FileGitDecision::{Discard, Resolve, Stage, Unstage};
+        let say = |d: &FileGitDecision| matches!(d, FileGitDecision::Say(text) if !text.is_empty());
+        // Modified, not staged.
+        let modified = change('.', 'M');
+        assert_eq!(
+            decide_file_command(Command::GitStageFile, &modified, false),
+            Stage
+        );
+        assert_eq!(
+            decide_file_command(Command::GitDiscardFile, &modified, false),
+            Discard
+        );
+        assert!(say(&decide_file_command(
+            Command::GitUnstageFile,
+            &modified,
+            false
+        )));
+        // Staged only: nothing to stage or discard, can unstage.
+        let staged = change('M', '.');
+        assert!(say(&decide_file_command(
+            Command::GitStageFile,
+            &staged,
+            false
+        )));
+        assert_eq!(
+            decide_file_command(Command::GitUnstageFile, &staged, false),
+            Unstage
+        );
+        assert!(say(&decide_file_command(
+            Command::GitDiscardFile,
+            &staged,
+            false
+        )));
+        // Staged and modified again: stage the rest, unstage, discard the working copy.
+        let both = change('M', 'M');
+        assert_eq!(
+            decide_file_command(Command::GitStageFile, &both, false),
+            Stage
+        );
+        assert_eq!(
+            decide_file_command(Command::GitUnstageFile, &both, false),
+            Unstage
+        );
+        assert_eq!(
+            decide_file_command(Command::GitDiscardFile, &both, false),
+            Discard
+        );
+        // Untracked: stage or discard (deletes it, after the confirmation).
+        let untracked = change('.', '?');
+        assert_eq!(
+            decide_file_command(Command::GitStageFile, &untracked, false),
+            Stage
+        );
+        assert_eq!(
+            decide_file_command(Command::GitDiscardFile, &untracked, false),
+            Discard
+        );
+        // A conflict can only be resolved, and only from saved text.
+        let conflict = change('U', 'U');
+        assert!(say(&decide_file_command(
+            Command::GitUnstageFile,
+            &conflict,
+            false
+        )));
+        assert!(say(&decide_file_command(
+            Command::GitDiscardFile,
+            &conflict,
+            false
+        )));
+        assert_eq!(
+            decide_file_command(Command::GitAcceptCurrent, &conflict, false),
+            Resolve(Side::Current)
+        );
+        assert_eq!(
+            decide_file_command(Command::GitAcceptIncoming, &conflict, false),
+            Resolve(Side::Incoming)
+        );
+        assert!(say(&decide_file_command(
+            Command::GitAcceptCurrent,
+            &conflict,
+            true
+        )));
+        assert!(say(&decide_file_command(
+            Command::GitAcceptIncoming,
+            &modified,
+            false
+        )));
+    }
 
     #[test]
     fn partial_replacement_reports_writes_and_root_failure_together() {
