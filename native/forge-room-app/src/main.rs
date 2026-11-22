@@ -1204,6 +1204,8 @@ impl ForgeRoomApp {
         if matches!(
             command,
             Command::GitCommit
+                | Command::GitStageAll
+                | Command::GitUnstageAll
                 | Command::GitStageFile
                 | Command::GitUnstageFile
                 | Command::GitDiscardFile
@@ -1491,6 +1493,41 @@ impl ForgeRoomApp {
             Command::GitPush => self.git_action(source_control::Action::Push),
             Command::GitFetch => self.git_action(source_control::Action::Fetch),
             Command::GitStash => self.git_action(source_control::Action::Stash),
+            Command::GitStageAll | Command::GitUnstageAll => {
+                let staging = command == Command::GitStageAll;
+                let paths: Vec<String> = match &self.git_status {
+                    Some(Ok(status)) => status
+                        .changes
+                        .iter()
+                        .filter(|change| {
+                            if staging {
+                                change.is_unstaged()
+                            } else {
+                                change.is_staged()
+                            }
+                        })
+                        .map(|change| change.path.clone())
+                        .collect(),
+                    _ => {
+                        self.status =
+                            "Git status is not available yet: try again in a moment".into();
+                        self.refresh_git();
+                        return;
+                    }
+                };
+                if paths.is_empty() {
+                    self.status = if staging {
+                        "Nothing to stage"
+                    } else {
+                        "Nothing is staged"
+                    }
+                    .into();
+                } else if staging {
+                    self.git_action(source_control::Action::Stage(paths));
+                } else {
+                    self.git_action(source_control::Action::Unstage(paths));
+                }
+            }
             Command::GitUndoCommit => self.git_action(source_control::Action::UndoCommit),
             Command::GitStashApply => self.git_action(source_control::Action::StashApply),
             Command::GitStageFile
