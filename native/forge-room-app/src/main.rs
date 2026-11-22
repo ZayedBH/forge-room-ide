@@ -1203,7 +1203,8 @@ impl ForgeRoomApp {
         // A Git command in a folder where Git is off would do nothing and say nothing.
         if matches!(
             command,
-            Command::GitStageFile
+            Command::GitCommit
+                | Command::GitStageFile
                 | Command::GitUnstageFile
                 | Command::GitDiscardFile
                 | Command::GitAcceptCurrent
@@ -1479,6 +1480,10 @@ impl ForgeRoomApp {
                         Err(error) => self.status = format!("Git: {}", git::explain(&error)),
                     }
                 }
+            }
+            Command::GitCommit => {
+                self.switch_view(SidebarView::SourceControl);
+                self.sc.focus_message = true;
             }
             Command::AbortOperation => self.git_action(source_control::Action::AbortOperation),
             Command::GitSync => self.git_action(source_control::Action::Sync),

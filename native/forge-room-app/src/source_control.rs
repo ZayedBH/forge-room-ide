@@ -6,6 +6,8 @@ use eframe::egui::{self, Align2, Color32, FontId, Rect, RichText, Sense, Stroke}
 
 pub struct State {
     pub message: String,
+    /// Set by the Git: Commit command: the message box takes the keyboard on the next frame.
+    pub focus_message: bool,
     pub staged_open: bool,
     pub changes_open: bool,
     pub conflicts_open: bool,
@@ -22,6 +24,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             message: String::new(),
+            focus_message: false,
             staged_open: true,
             changes_open: true,
             conflicts_open: true,
@@ -349,6 +352,9 @@ fn ready(ui: &mut egui::Ui, state: &mut State, view: &View, compact: bool) -> Op
                 .desired_width(f32::INFINITY)
                 .margin(egui::Margin::symmetric(10, 8));
             let response = ui.add(editor);
+            if std::mem::take(&mut state.focus_message) {
+                response.request_focus();
+            }
             // Finishing a merge, cherry-pick or revert needs no typed message: Git prepared one.
             let can_commit = !staged.is_empty()
                 && conflicts.is_empty()
