@@ -1491,6 +1491,7 @@ impl ForgeRoomApp {
             Command::GitPush => self.git_action(source_control::Action::Push),
             Command::GitFetch => self.git_action(source_control::Action::Fetch),
             Command::GitStash => self.git_action(source_control::Action::Stash),
+            Command::GitUndoCommit => self.git_action(source_control::Action::UndoCommit),
             Command::GitStashApply => self.git_action(source_control::Action::StashApply),
             Command::GitStageFile
             | Command::GitUnstageFile
